@@ -46,12 +46,12 @@ Here is a diagram illustrating the data flow:
 
 ```mermaid
 graph TD
-    A[User Action e.g., Login, Sync, Ask AI] --> B{UI Component e.g., LoginPage, WalletView, AskView};
-    B --> C[API Service (api.ts)];
-    C --> D[LocalStorage Database];
-    D --> C;
-    C --> B;
-    B --> E[Update UI State];
+    A["User Action (e.g. Sync Activity)"] --> B["UI Component (e.g. WalletView)"]
+    B --> C["Opus API Client (opusClient.ts)"]
+    C --> D["Opus Workflow Execution"]
+    D --> C
+    C --> B
+    B --> E["Update UI State & localStorage"]
 ```
 
 ---
