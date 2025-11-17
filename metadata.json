@@ -1,7 +1,5 @@
 {
-  "name": "Fitcoin Wallet",
+  "name": "Copy of Fitcoin Wallet",
   "description": "A web application that tokenizes health insurance by rewarding users with 'Fitcoins' for their physical activities. Users can sign up, track their earnings, view a community leaderboard, and simulate activities to see their balance grow.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
+  "requestFramePermissions": []
 }

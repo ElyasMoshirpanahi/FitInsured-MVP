@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Footprints, Loader2, Mail, KeyRound } from 'lucide-react';
 import type { User as UserType } from '../types';
@@ -34,7 +33,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onStartSignup }) => {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-50 p-4">
-      <div className="w-full max-w-md bg-white shadow-xl rounded-2xl overflow-hidden flex flex-col justify-between items-center p-8 min-h-[600px]">
+      <div className="w-full max-w-md bg-white shadow-xl rounded-2xl overflow-hidden h-[800px] md:h-[90vh] flex flex-col justify-between items-center p-8">
         
         <div className="text-center w-full pt-12">
           <div className="flex justify-center items-center w-24 h-24 bg-indigo-100 rounded-full mx-auto">

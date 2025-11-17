@@ -71,15 +71,6 @@ const FITCOIN_METRICS: {
     "move_minutes": { "unit": "minutes", "value_per_fitcoin": 20 },
     "heart_points": { "unit": "points", "value_per_fitcoin": 10 }
   },
-  "fitbit_metrics": {
-    "steps": { "unit": "steps", "value_per_fitcoin": 1000 },
-    "run_distance": { "unit": "kilometers", "value_per_fitcoin": 2 },
-    "cycle_distance": { "unit": "kilometers", "value_per_fitcoin": 4 },
-    "active_minutes": { "unit": "minutes", "value_per_fitcoin": 20 },
-    "floors_climbed": { "unit": "floors", "value_per_fitcoin": 10 },
-    "active_calories": { "unit": "kcal", "value_per_fitcoin": 150 },
-    "sleep_hours": { "unit": "hours", "value_per_fitcoin": 7 }
-  },
   "apple_health_metrics": {
     "exercise_minutes": { "unit": "minutes", "value_per_fitcoin": 30 },
     "active_kcal": { "unit": "kcal", "value_per_fitcoin": 200 },
