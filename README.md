@@ -1,6 +1,6 @@
 # Fitcoin Wallet 🏋️‍♂️💰
 
-![Fitcoin Banner](https://i.imgur.com/8a6B5N5.png)
+![Fitcoin Banner](https://github-production-user-asset-6210df.s3.amazonaws.com/74038190/242390692-0b335028-1d3d-4ee5-b5b3-a373d499be7e.gif?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20251117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251117T193547Z&X-Amz-Expires=300&X-Amz-Signature=89fbf40f7a40a3c482b83239256d519050e075dd09e3cdeeb76a117916f98701&X-Amz-SignedHeaders=host)
 
 <div align="center">
 
@@ -46,12 +46,12 @@ Here is a diagram illustrating the data flow:
 
 ```mermaid
 graph TD
-    A[User Action e.g., Login, Sync, Ask AI] --> B{UI Component e.g., LoginPage, WalletView, AskView};
-    B --> C[API Service (api.ts)];
-    C --> D[LocalStorage Database];
-    D --> C;
-    C --> B;
-    B --> E[Update UI State];
+    A["User Action (e.g. Sync Activity)"] --> B["UI Component (e.g. WalletView)"]
+    B --> C["Opus API Client (opusClient.ts)"]
+    C --> D["Opus Workflow Execution"]
+    D --> C
+    C --> B
+    B --> E["Update UI State & localStorage"]
 ```
 
 ---
