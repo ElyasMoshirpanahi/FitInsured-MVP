@@ -1,13 +1,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import type { User, WalletSummary } from '../types';
-import { Wallet, Users, LogOut, User as UserIcon, Store, TrendingUp } from 'lucide-react';
+import { Wallet, Users, LogOut, User as UserIcon, Store, TrendingUp, Bot } from 'lucide-react';
 import WalletView from './WalletView';
 import { CommunityView } from './CommunityView';
 import SavingsView from './SavingsView';
 import MarketplaceView from './MarketplaceView';
 import NotificationToast from './NotificationToast';
 import { getWalletSummary, redeemItem, stakeCoins } from '../services/api';
+import AskView from './AskView';
 
 interface NavItemProps {
   icon: React.ElementType;
@@ -19,7 +20,7 @@ interface NavItemProps {
 const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, isActive, onClick }) => {
   const activeClasses = isActive ? "text-indigo-600" : "text-gray-500 hover:text-gray-700";
   return (
-    <button onClick={onClick} className={`flex flex-col items-center p-2 transition-colors duration-200 w-1/4 ${activeClasses}`}>
+    <button onClick={onClick} className={`flex flex-col items-center p-2 transition-colors duration-200 w-1/5 ${activeClasses}`}>
       <Icon className="w-6 h-6" strokeWidth={isActive ? 2.5 : 1.5} />
       <span className="text-xs mt-1 font-medium">{label}</span>
     </button>
@@ -31,6 +32,7 @@ const NAV_ITEMS = [
   { id: 'savings', label: 'Savings', icon: TrendingUp },
   { id: 'marketplace', label: 'Market', icon: Store },
   { id: 'community', label: 'Community', icon: Users },
+  { id: 'ask', label: 'Ask', icon: Bot },
 ];
 
 const DesktopSidebar: React.FC<{ user: User; currentView: string; setCurrentView: (view: string) => void; onLogout: () => void; }> = ({ user, currentView, setCurrentView, onLogout }) => (
@@ -141,6 +143,8 @@ const MainApp: React.FC<MainAppProps> = ({ user, onLogout }) => {
         return <MarketplaceView balance={summary?.balance ?? 0} onRedeem={handleRedeem} />;
       case 'community':
         return <CommunityView user={user} />;
+      case 'ask':
+        return <AskView />;
       case 'wallet':
       default:
         return <WalletView user={user} summary={summary} isLoading={isLoading} error={error} onRefresh={fetchSummary} navigateToCommunity={() => setCurrentView('community')} />;
