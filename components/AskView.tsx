@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob as GenAIBlob, Chat } from '@google/genai';
-import { Mic, MicOff, Bot, User, Loader2, Send } from 'lucide-react';
+import { Mic, MicOff, Bot, User, Loader2, Send, Sparkles } from 'lucide-react';
 
 // --- AUDIO HELPER FUNCTIONS (as per @google/genai guidelines) ---
 
@@ -55,6 +55,117 @@ function createBlob(data: Float32Array): GenAIBlob {
   };
 }
 
+// Simple Markdown Renderer for chat bubbles
+const MarkdownRenderer: React.FC<{ text: string }> = ({ text }) => {
+    // Process lines for lists
+    const lines = text.split('\n').map((line, index) => {
+        if (line.trim().startsWith('* ') || line.trim().startsWith('- ')) {
+            const content = line.trim().substring(2);
+            // Render inline markdown within the list item
+            const parts = content.split(/(\*\*.*?\*\*|`.*?`)/g).filter(Boolean);
+            return (
+                <li key={index}>
+                    {parts.map((part, i) => {
+                        if (part.startsWith('**') && part.endsWith('**')) {
+                            return <strong key={i}>{part.slice(2, -2)}</strong>;
+                        }
+                        if (part.startsWith('`') && part.endsWith('`')) {
+                            return <code key={i} className="bg-gray-700 rounded px-1 py-0.5 text-sm font-mono">{part.slice(1, -1)}</code>;
+                        }
+                        return part;
+                    })}
+                </li>
+            );
+        }
+        return line;
+    });
+
+    const renderedContent = lines.map((line, index) => {
+        if (typeof line === 'string') {
+            const parts = line.split(/(\*\*.*?\*\*|`.*?`)/g).filter(Boolean);
+            return (
+                <p key={index} className="min-h-[1em]">
+                    {parts.map((part, i) => {
+                        if (part.startsWith('**') && part.endsWith('**')) {
+                            return <strong key={i}>{part.slice(2, -2)}</strong>;
+                        }
+                         if (part.startsWith('`') && part.endsWith('`')) {
+                            return <code key={i} className="bg-gray-700 rounded px-1 py-0.5 text-sm font-mono">{part.slice(1, -1)}</code>;
+                        }
+                        return part;
+                    })}
+                </p>
+            );
+        }
+        return <ul key={index} className="list-disc list-inside space-y-1">{line}</ul>; // Render the <li> element
+    });
+
+    return <div className="space-y-2">{renderedContent}</div>;
+};
+
+const suggestedPrompts = [
+  { text: "What exactly is Fitcoin?", emoji: "🤔" },
+  { text: "How can I earn more FIT?", emoji: "🚀" },
+  { text: "Explain the Savings Tiers.", emoji: "📈" },
+  { text: "What's the best value in the Marketplace?", emoji: "🛒" },
+];
+
+
+const Headlines: React.FC<{
+  prompts: { text: string; emoji: string }[];
+  onClick: (prompt: string) => void;
+}> = ({ prompts, onClick }) => {
+  const allPrompts = [...prompts, ...prompts]; // Duplicate for seamless loop
+
+  return (
+    <div className="w-full max-w-md bg-gray-800/80 backdrop-blur-sm rounded-full overflow-hidden relative h-12 flex items-center group">
+      <div className="absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent z-10"></div>
+      <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-gray-900 via-gray-900/80 to-transparent z-10"></div>
+      <div className="flex animate-scroll group-hover:pause">
+        {allPrompts.map((prompt, index) => (
+          <button
+            key={index}
+            onClick={() => onClick(prompt.text)}
+            className="flex-shrink-0 flex items-center mx-4 text-sm text-gray-300 hover:text-white transition whitespace-nowrap"
+          >
+            <span className="mr-2 text-lg">{prompt.emoji}</span>
+            {prompt.text}
+            <Sparkles className="w-4 h-4 text-indigo-400 ml-6 opacity-50" />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const SuggestionsTicker: React.FC<{
+  prompts: { text: string; emoji: string }[];
+  onClick: (prompt: string) => void;
+}> = ({ prompts, onClick }) => {
+  if (prompts.length === 0) return null;
+  
+  const allPrompts = [...prompts, ...prompts]; // Duplicate for seamless loop
+
+  return (
+    <div className="w-full bg-gray-800/50 rounded-full overflow-hidden relative h-10 flex items-center group mb-2">
+      <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-gray-900/80 to-transparent z-10"></div>
+      <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-gray-900/80 to-transparent z-10"></div>
+      <div className="flex animate-scroll group-hover:pause">
+        {allPrompts.map((prompt, index) => (
+          <button
+            key={index}
+            onClick={() => onClick(prompt.text)}
+            className="flex-shrink-0 flex items-center mx-3 text-xs text-gray-300 hover:text-white transition whitespace-nowrap"
+          >
+            <span className="mr-2 text-base">{prompt.emoji}</span>
+            {prompt.text}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 
 const AskView: React.FC = () => {
     type ConnectionState = 'idle' | 'connecting' | 'connected' | 'error';
@@ -64,6 +175,7 @@ const AskView: React.FC = () => {
     const [currentOutput, setCurrentOutput] = useState('');
     const [textInput, setTextInput] = useState('');
     const [isModelResponding, setIsModelResponding] = useState(false);
+    const [contextualSuggestions, setContextualSuggestions] = useState<{ text: string; emoji: string; }[]>([]);
 
     const sessionPromiseRef = useRef<Promise<any> | null>(null);
     const inputAudioContextRef = useRef<AudioContext | null>(null);
@@ -79,7 +191,13 @@ const AskView: React.FC = () => {
         transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    useEffect(scrollToBottom, [transcript, currentInput, currentOutput, isModelResponding]);
+    useEffect(scrollToBottom, [transcript]);
+    useEffect(() => {
+        if(isModelResponding || currentOutput) {
+            scrollToBottom();
+        }
+    }, [isModelResponding, currentOutput, transcript]);
+
 
     const stopConversation = useCallback(async () => {
         if (sessionPromiseRef.current) {
@@ -119,7 +237,8 @@ const AskView: React.FC = () => {
     const systemInstruction = `You are a friendly, enthusiastic, and helpful Fitcoin assistant and health coach. You have complete knowledge of the Fitcoin app ecosystem. Your primary goal is to help users understand the app, stay motivated, and achieve their fitness goals.
 
 Your knowledge includes:
-- Wallet: Balance, today's earnings, weekly totals, activity sync cooldown (1 hour).
+- Wallet: Balance, today's earnings, weekly totals, activity sync cooldown (1 hour). The balance can be toggled to show its value in Polygon (MATIC).
+- Valuation: **10 Fitcoin (FIT) = 1 Polygon (MATIC)**. The USD value is based on the live market price of MATIC.
 - Savings: Staking FIT, APY tiers (Bronze, Silver, Gold), and their minimum stake requirements.
 - Marketplace: Available rewards, their costs, and how to redeem them.
 - Community: Challenges, leaderboards, and the activity feed.
@@ -127,9 +246,15 @@ Your knowledge includes:
 
 When interacting with users:
 - Always be encouraging and positive.
-- Proactively offer tips and suggestions related to the app. For example, if they ask about their balance, you could suggest staking some FIT to earn more. If they talk about running, you could mention a running challenge.
-- Keep your answers concise and conversational.
-- When asked a question you don't know the answer to, politely say you specialize in the Fitcoin app and fitness topics.`;
+- Proactively offer tips and suggestions related to the app. For example, if they ask about their balance, you could mention the MATIC valuation and suggest staking some FIT to earn more.
+- Keep your answers concise and conversational. Use Markdown for lists or emphasis.
+- After EVERY response, you MUST generate 2-3 short, relevant follow-up questions based on the current conversation to guide the user. Format these suggestions inside a [SUGGESTIONS] block like this example:
+[SUGGESTIONS]
+? 🤔 What is staking?
+? 🚀 How do I join a challenge?
+? 🛒 What can I buy in the Marketplace?
+[/SUGGESTIONS]
+- The suggestions should be diverse and genuinely helpful for continuing the conversation. Do not add suggestions if the user says goodbye.`;
 
     const startConversation = useCallback(async () => {
         setConnectionState('connecting');
@@ -141,7 +266,6 @@ When interacting with users:
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaStreamRef.current = stream;
 
-            // FIX: Cast window to `any` to support `webkitAudioContext` for older browsers.
             inputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
             outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
             
@@ -225,13 +349,17 @@ When interacting with users:
         }
     }, [stopConversation, currentInput, currentOutput]);
 
-    const handleSendTextMessage = async () => {
-        if (!textInput.trim() || isModelResponding || connectionState !== 'idle') return;
+    const handleSendTextMessage = async (messageOverride?: string) => {
+        const userMessage = messageOverride || textInput.trim();
+        if (!userMessage || isModelResponding || connectionState !== 'idle') return;
 
-        const userMessage = textInput.trim();
-        setTextInput('');
+        if (!messageOverride) {
+            setTextInput('');
+        }
+        setContextualSuggestions([]);
         setTranscript(prev => [...prev, { speaker: 'user', text: userMessage }]);
         setIsModelResponding(true);
+        setTranscript(prev => [...prev, { speaker: 'model', text: '' }]); // Placeholder for model's response
 
         try {
             if (!chatRef.current) {
@@ -242,19 +370,67 @@ When interacting with users:
                 });
             }
 
-            const response = await chatRef.current.sendMessage({ message: userMessage });
-            const modelResponseText = response.text;
-            setTranscript(prev => [...prev, { speaker: 'model', text: modelResponseText }]);
+            const responseStream = await chatRef.current.sendMessageStream({ message: userMessage });
+            
+            for await (const chunk of responseStream) {
+                const chunkText = chunk.text;
+                setTranscript(prev => {
+                    const newTranscript = [...prev];
+                    if (newTranscript.length > 0) {
+                        newTranscript[newTranscript.length - 1].text += chunkText;
+                    }
+                    return newTranscript;
+                });
+            }
+
         } catch (error) {
             console.error("Failed to send message:", error);
-            setTranscript(prev => [...prev, { speaker: 'model', text: "Sorry, I encountered an error. Please try again." }]);
+            setTranscript(prev => {
+                const newTranscript = [...prev];
+                newTranscript[newTranscript.length-1].text = "Sorry, I encountered an error. Please try again.";
+                return newTranscript;
+            });
         } finally {
             setIsModelResponding(false);
+            // Post-processing after stream is complete
+            setTranscript(prev => {
+                const newTranscript = [...prev];
+                const lastMessage = newTranscript[newTranscript.length - 1];
+                if (!lastMessage || lastMessage.speaker !== 'model') return prev;
+
+                const suggestionBlockRegex = /\[SUGGESTIONS\]\n?([\s\S]*?)\n?\[\/SUGGESTIONS\]/;
+                const match = lastMessage.text.match(suggestionBlockRegex);
+
+                if (match && match[1]) {
+                    const suggestionLines = match[1].trim().split('\n');
+                    const newSuggestions = suggestionLines
+                        .map(line => {
+                            const suggestionMatch = line.trim().match(/^\?\s*(.+?)\s+(.*)$/);
+                            if (suggestionMatch && suggestionMatch[1] && suggestionMatch[2]) {
+                                return { emoji: suggestionMatch[1], text: suggestionMatch[2] };
+                            }
+                            return null;
+                        })
+                        .filter((s): s is { emoji: string, text: string } => s !== null);
+                    
+                    setContextualSuggestions(newSuggestions);
+                    lastMessage.text = lastMessage.text.replace(suggestionBlockRegex, '').trim();
+                } else {
+                    setContextualSuggestions([]);
+                }
+                
+                return newTranscript;
+            });
         }
     };
-
+    
     useEffect(() => {
-        return () => { stopConversation(); };
+        return () => { 
+            stopConversation();
+            if (chatRef.current) {
+                chatRef.current = null;
+            }
+        };
     }, [stopConversation]);
     
     const handleToggleConversation = () => {
@@ -284,29 +460,51 @@ When interacting with users:
     const displayInput = isVoiceActive ? (currentInput ? currentInput + '...' : '') : textInput;
 
     return (
-        <div className="flex flex-col h-full bg-white rounded-xl shadow-md overflow-hidden">
-            <header className="p-4 border-b border-gray-200 flex-shrink-0">
-                <h3 className="text-xl font-bold text-gray-800 flex items-center">
-                    <Bot className="w-6 h-6 mr-2 text-indigo-600" />
+        <div className="flex flex-col h-full bg-gray-900 rounded-xl shadow-md overflow-hidden">
+            <style>{`
+                .chat-area-background {
+                    background-color: #111;
+                    background-image: linear-gradient(135deg, rgba(128, 0, 128, 0.1), rgba(255, 105, 180, 0.05)), url('https://blog.1a23.com/wp-content/uploads/sites/2/2020/02/Desktop.png');
+                    background-blend-mode: screen;
+                    background-size: cover, cover;
+                }
+                @keyframes scroll {
+                    from { transform: translateX(0); }
+                    to { transform: translateX(-50%); }
+                }
+                .animate-scroll {
+                    animation: scroll 40s linear infinite;
+                }
+                .group-hover\\:pause:hover {
+                    animation-play-state: paused;
+                }
+            `}</style>
+            <header className="p-4 border-b border-white/10 flex-shrink-0 bg-gray-900/50 backdrop-blur-sm">
+                <h3 className="text-xl font-bold text-white flex items-center">
+                    <Bot className="w-6 h-6 mr-2 text-indigo-400" />
                     Ask Fitcoin AI
                 </h3>
             </header>
             
-            <main className="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-50">
+            <main className="flex-1 p-4 overflow-y-auto space-y-4 chat-area-background">
                 {transcript.length === 0 && connectionState === 'idle' && !isModelResponding && (
-                    <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
-                        <Bot size={48} className="mb-4" />
-                        <p className="font-semibold">Ready to chat!</p>
-                        <p className="text-sm">Type a message or tap the microphone to start.</p>
+                    <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 p-4">
+                        <Bot size={48} className="mb-4 text-indigo-400" />
+                        <p className="font-semibold text-lg text-gray-300 mb-2">Ask me anything about Fitcoin!</p>
+                        <p className="text-sm mb-6">Or try one of these suggestions:</p>
+                        <Headlines prompts={suggestedPrompts} onClick={handleSendTextMessage} />
                     </div>
                 )}
                 {transcript.map((entry, index) => (
                     <div key={index} className={`flex items-start gap-3 ${entry.speaker === 'user' ? 'justify-end' : ''}`}>
-                        {entry.speaker === 'model' && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center"><Bot className="w-5 h-5 text-indigo-600" /></div>}
-                        <div className={`max-w-xs md:max-w-md p-3 rounded-xl shadow-sm ${entry.speaker === 'user' ? 'bg-indigo-500 text-white' : 'bg-white text-gray-800'}`}>
-                            <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{entry.text}</p>
+                        {entry.speaker === 'model' && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center"><Bot className="w-5 h-5 text-indigo-400" /></div>}
+                        <div className={`max-w-xs md:max-w-md p-3 rounded-xl shadow-sm ${entry.speaker === 'user' ? 'bg-indigo-500 text-white' : 'bg-gray-800 text-gray-200'}`}>
+                            <div className="text-sm">
+                                {entry.speaker === 'model' ? <MarkdownRenderer text={entry.text} /> : <p>{entry.text}</p>}
+                                {isModelResponding && index === transcript.length - 1 && <span className="inline-block w-1 h-3 bg-white/50 animate-pulse ml-1"></span>}
+                            </div>
                         </div>
-                        {entry.speaker === 'user' && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center"><User className="w-5 h-5 text-gray-600" /></div>}
+                        {entry.speaker === 'user' && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center"><User className="w-5 h-5 text-gray-300" /></div>}
                     </div>
                 ))}
                  {currentInput && connectionState === 'connected' && (
@@ -314,41 +512,47 @@ When interacting with users:
                         <div className="max-w-xs md:max-w-md p-3 rounded-xl bg-indigo-500 text-white opacity-60">
                              <p className="text-sm">{currentInput}...</p>
                         </div>
-                         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center"><User className="w-5 h-5 text-gray-600" /></div>
+                         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center"><User className="w-5 h-5 text-gray-300" /></div>
                     </div>
                  )}
                  {currentOutput && (
                     <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center"><Bot className="w-5 h-5 text-indigo-600" /></div>
-                        <div className="max-w-xs md:max-w-md p-3 rounded-xl bg-white text-gray-800 opacity-60">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center"><Bot className="w-5 h-5 text-indigo-400" /></div>
+                        <div className="max-w-xs md:max-w-md p-3 rounded-xl bg-gray-800 text-gray-200 opacity-60">
                              <p className="text-sm">{currentOutput}...</p>
                         </div>
                     </div>
                  )}
-                 {isModelResponding && (
-                    <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center"><Bot className="w-5 h-5 text-indigo-600" /></div>
-                        <div className="max-w-xs md:max-w-md p-3 rounded-xl bg-white text-gray-800 flex items-center justify-center">
-                            <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
-                        </div>
-                    </div>
-                )}
                 <div ref={transcriptEndRef} />
             </main>
             
-            <footer className="p-2 border-t border-gray-200 bg-white flex-shrink-0">
+            <footer className="p-2 border-t border-white/10 bg-gray-900/50 backdrop-blur-sm flex-shrink-0">
+                {contextualSuggestions.length > 0 && !isModelResponding && (
+                    <SuggestionsTicker 
+                        prompts={contextualSuggestions} 
+                        onClick={(promptText) => {
+                            handleSendTextMessage(promptText);
+                            setContextualSuggestions([]);
+                        }}
+                    />
+                )}
                 <div className="flex items-center space-x-2">
                     <input
                         type="text"
                         value={displayInput}
-                        onChange={(e) => setTextInput(e.target.value)}
+                        onChange={(e) => {
+                            setTextInput(e.target.value);
+                            if (contextualSuggestions.length > 0) {
+                                setContextualSuggestions([]);
+                            }
+                        }}
                         onKeyDown={(e) => { if (e.key === 'Enter') handleSendTextMessage(); }}
                         disabled={isVoiceActive}
-                        className="flex-1 w-full bg-gray-100 border-transparent rounded-full py-2 px-4 text-sm text-gray-700 focus:outline-none disabled:bg-gray-200"
+                        className="flex-1 w-full bg-gray-800 border-transparent rounded-full py-2 px-4 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-700"
                         placeholder={isVoiceActive ? placeholder : "Type a message..."}
                     />
                     <button
-                        onClick={textInput && !isVoiceActive ? handleSendTextMessage : handleToggleConversation}
+                        onClick={textInput && !isVoiceActive ? () => handleSendTextMessage() : handleToggleConversation}
                         disabled={connectionState === 'connecting' || isModelResponding}
                         className={`w-10 h-10 rounded-full text-white flex-shrink-0 flex items-center justify-center shadow-md transition-all duration-200 disabled:opacity-50 ${textInput && !isVoiceActive ? 'bg-indigo-600' : className}`}
                         aria-label={textInput && !isVoiceActive ? 'Send message' : (connectionState === 'connected' ? 'Stop conversation' : 'Start conversation')}

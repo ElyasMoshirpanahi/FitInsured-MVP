@@ -1,9 +1,10 @@
 
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import type { User, WalletSummary, Challenge, JobStatus, Activity } from '../types';
 import { JobState } from '../types';
 import { simulateActivity, getJobStatus, getChallenges } from '../services/api';
-import { Loader2, Activity as ActivityIcon, BarChart3, TrendingUp, AlertCircle, Zap, Info, Footprints, Moon, Bike, Award } from 'lucide-react';
+import { Loader2, Activity as ActivityIcon, BarChart3, TrendingUp, AlertCircle, Zap, Info, Footprints, Moon, Bike, Award, Repeat } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface WalletViewProps {
@@ -126,7 +127,7 @@ const ReportModal: React.FC<{
                         <Award className="w-12 h-12 text-green-500" />
                         <h3 className="text-2xl font-extrabold text-gray-800 mt-3">Congratulations!</h3>
                         <p className="text-gray-600 mt-1">You've earned</p>
-                        <p className="text-4xl font-bold text-green-600 my-2 animate-pop-in">{jobResult?.fitcoinDelta?.toFixed(2)} FIT</p>
+                        <p className="text-4xl font-bold text-green-600 my-2 animate-pop-in">{(jobResult?.fitcoinDelta ?? 0).toFixed(2)} FIT</p>
                         <p className="text-sm text-gray-500 mt-3">Great work! Come back in 1 hour to sync again and earn more.</p>
                         <button onClick={onClose} className="mt-4 bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg text-sm">Done</button>
                     </div>
@@ -154,6 +155,10 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBalanceAnimating, setIsBalanceAnimating] = useState(false);
 
+  const [displayCurrency, setDisplayCurrency] = useState<'fit' | 'matic'>('fit');
+  // Use a simulated, hardcoded price for MATIC to ensure stability and avoid API errors.
+  const maticPrice = 0.58; 
+  
   const COOLDOWN_STORAGE_KEY = `fitcoinSyncCooldown_${user.userId}`;
   const [cooldownTime, setCooldownTime] = useState<number | null>(null);
 
@@ -252,7 +257,6 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
   };
 
   const chartData = summary?.last7Days.map(d => ({
-    // FIX: Corrected typo from toLocaleDateTimeString to toLocaleDateString.
     name: new Date(d.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }),
     fitcoin: d.fitcoinEarned,
   })) || [];
@@ -271,6 +275,9 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
   
   const weeklyTotal = summary.last7Days.reduce((sum, day) => sum + day.fitcoinEarned, 0);
   const isOnCooldown = cooldownTime !== null && cooldownTime > 0;
+  
+  const maticAmount = summary.balance / 10;
+  const usdValue = maticPrice ? maticAmount * maticPrice : null;
 
   return (
     <div className="space-y-6">
@@ -299,7 +306,7 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
       `}</style>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-6 lg:items-center">
-        <header className={`bg-indigo-600 p-6 rounded-xl shadow-lg text-white transition-colors duration-300 ${isBalanceAnimating ? 'balance-flash-anim' : ''}`}>
+        <header className={`relative bg-indigo-600 p-6 rounded-xl shadow-lg text-white transition-colors duration-300 ${isBalanceAnimating ? 'balance-flash-anim' : ''}`}>
           <div className="flex justify-between items-center">
               <p className="text-sm font-light opacity-80">Total Balance</p>
               <div title="You can earn a maximum of 50 FIT per day from activities to ensure fairness." className="flex items-center cursor-help">
@@ -307,13 +314,28 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
                 <Info className="w-4 h-4 ml-1.5 opacity-70" />
               </div>
           </div>
-          <h2 className="text-5xl font-extrabold my-1">
-              <AnimatedBalance endValue={summary.balance} />
-              <span className="text-2xl font-medium opacity-90"> FIT</span>
-          </h2>
-          <p className="text-lg font-light opacity-80">
-            +{summary.today.fitcoinEarned.toFixed(2)} today · +{weeklyTotal.toFixed(2)} this week
-          </p>
+          <button 
+            onClick={() => setDisplayCurrency(c => c === 'fit' ? 'matic' : 'fit')} 
+            className="w-full text-left focus:outline-none focus:ring-2 focus:ring-white/50 rounded-lg py-1 -my-1"
+            aria-label="Toggle currency display"
+          >
+            <h2 className="text-5xl font-extrabold my-2 flex items-baseline flex-wrap">
+              <AnimatedBalance endValue={displayCurrency === 'fit' ? summary.balance : maticAmount} />
+              <span className="text-2xl font-medium opacity-90 ml-2">{displayCurrency === 'fit' ? 'FIT' : 'MATIC'}</span>
+              {usdValue != null && (
+                <span className="text-xl font-light opacity-80 ml-4">
+                  ≈ ${usdValue.toFixed(2)} USD
+                </span>
+              )}
+            </h2>
+          </button>
+           <div className="text-sm font-light opacity-80 h-5 mt-1">
+             <span>Based on 1 MATIC ≈ ${maticPrice.toFixed(2)} USD</span>
+          </div>
+          <div className="absolute bottom-2 right-2 text-white/50 flex items-center text-xs pointer-events-none">
+            <Repeat className="w-3 h-3 mr-1" />
+            <span>Tap to convert</span>
+          </div>
         </header>
         
         <div className="mt-6 lg:mt-0">
@@ -372,7 +394,7 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
                       <p className="text-xs text-gray-500">{activity.metric}</p>
                     </div>
                   </div>
-                  <p className="font-bold text-green-600">+ {activity.fitcoin.toFixed(2)} FIT</p>
+                  <p className="font-bold text-green-600">+ {(activity.fitcoin ?? 0).toFixed(2)} FIT</p>
                 </div>
               );
             })}
