@@ -1,0 +1,11 @@
+{
+  "provider": "apple_health",
+  "type": "sleep",
+  "source": "Apple Watch Series 9",
+  "sleepSessionId": "ah_sleep_001",
+  "startDate": "2025-11-15T23:15:00Z",
+  "endDate": "2025-11-16T06:45:00Z",
+  "durationHours": 7.5,
+  "inBedHours": 8.0,
+  "sleepQualityScore": 86
+}

@@ -1,0 +1,12 @@
+{
+  "provider": "fitbit",
+  "logId": 700001002,
+  "activityType": "walk",
+  "device": "Fitbit Charge 6",
+  "startTime": "2025-11-16T12:30:00Z",
+  "durationMs": 2400000,
+  "steps": 4200,
+  "distance": 3.1,
+  "distanceUnit": "Kilometer",
+  "calories": 160
+}

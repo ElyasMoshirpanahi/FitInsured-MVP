@@ -1,0 +1,11 @@
+{
+  "provider": "samsung_health",
+  "type": "daily_summary",
+  "summary_id": "sh_daily_001",
+  "device": "Galaxy Watch6",
+  "date": "2025-11-16",
+  "total_steps": 11250,
+  "active_minutes": 54,
+  "floors_climbed": 12,
+  "calories_burned": 2100
+}

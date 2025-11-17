@@ -1,0 +1,14 @@
+{
+  "provider": "garmin",
+  "activityId": 800001003,
+  "activityName": "Evening Walk Garmin",
+  "activityType": "walking",
+  "device": "Vivoactive 5",
+  "startTime": "2025-11-15T18:30:00Z",
+  "durationSec": 2400,
+  "distanceMeters": 3200.0,
+  "averageHr": 102,
+  "maxHr": 120,
+  "calories": 140,
+  "steps": 3800
+}

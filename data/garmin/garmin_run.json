@@ -1,0 +1,14 @@
+{
+  "provider": "garmin",
+  "activityId": 800001001,
+  "activityName": "Garmin Morning Run",
+  "activityType": "running",
+  "device": "Forerunner 955",
+  "startTime": "2025-11-16T06:15:00Z",
+  "durationSec": 2700,
+  "distanceMeters": 6000.0,
+  "averageHr": 148,
+  "maxHr": 174,
+  "calories": 420,
+  "averagePaceSecPerKm": 450
+}

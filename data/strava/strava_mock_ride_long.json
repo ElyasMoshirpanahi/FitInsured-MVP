@@ -1,0 +1,13 @@
+{
+  "id": 900001005,
+  "type": "Ride",
+  "name": "Long Weekend Ride",
+  "distance": 30000.0,
+  "moving_time": 5400,
+  "elapsed_time": 5800,
+  "total_elevation_gain": 280.0,
+  "average_speed": 5.5,
+  "has_heartrate": true,
+  "average_heartrate": 150,
+  "max_heartrate": 178
+}

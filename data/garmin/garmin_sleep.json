@@ -1,0 +1,13 @@
+{
+  "provider": "garmin",
+  "sleepId": 800001005,
+  "device": "Vivoactive 5",
+  "date": "2025-11-16",
+  "sleepStartTime": "2025-11-15T23:00:00Z",
+  "sleepEndTime": "2025-11-16T06:30:00Z",
+  "sleepDurationSec": 27000,
+  "deepSleepSec": 9000,
+  "lightSleepSec": 13500,
+  "remSleepSec": 4500,
+  "sleepScore": 80
+}

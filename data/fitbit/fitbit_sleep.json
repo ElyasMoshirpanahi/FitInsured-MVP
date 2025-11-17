@@ -1,0 +1,12 @@
+{
+  "provider": "fitbit",
+  "sleepLogId": 700001004,
+  "device": "Fitbit Charge 6",
+  "dateOfSleep": "2025-11-16",
+  "startTime": "2025-11-15T22:45:00Z",
+  "endTime": "2025-11-16T06:15:00Z",
+  "durationMs": 27000000,
+  "minutesAsleep": 430,
+  "minutesAwake": 25,
+  "efficiency": 88
+}

@@ -1,0 +1,12 @@
+{
+  "provider": "fitbit",
+  "logId": 700001003,
+  "activityType": "bike",
+  "device": "Fitbit Sense 2",
+  "startTime": "2025-11-15T17:30:00Z",
+  "durationMs": 3600000,
+  "distance": 18.0,
+  "distanceUnit": "Kilometer",
+  "calories": 480,
+  "averageHeartRate": 135
+}

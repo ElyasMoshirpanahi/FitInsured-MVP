@@ -1,0 +1,11 @@
+{
+  "provider": "fitbit",
+  "summaryDate": "2025-11-16",
+  "steps": 11500,
+  "floors": 11,
+  "sedentaryMinutes": 620,
+  "lightlyActiveMinutes": 120,
+  "fairlyActiveMinutes": 35,
+  "veryActiveMinutes": 25,
+  "caloriesOut": 2250
+}

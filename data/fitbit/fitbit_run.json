@@ -1,0 +1,32 @@
+{
+  "provider": "fitbit",
+  "logId": 700001001,
+  "activityType": "run",
+  "device": "Fitbit Sense 2",
+  "startTime": "2025-11-16T06:00:00Z",
+  "durationMs": 1800000,
+  "steps": 5000,
+  "distance": 5.2,
+  "distanceUnit": "Kilometer",
+  "calories": 310,
+  "heartRateZones": [
+    {
+      "name": "Fat Burn",
+      "min": 110,
+      "max": 130,
+      "minutes": 12
+    },
+    {
+      "name": "Cardio",
+      "min": 131,
+      "max": 150,
+      "minutes": 10
+    },
+    {
+      "name": "Peak",
+      "min": 151,
+      "max": 180,
+      "minutes": 3
+    }
+  ]
+}

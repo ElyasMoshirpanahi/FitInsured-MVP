@@ -1,0 +1,12 @@
+{
+  "provider": "apple_health",
+  "type": "HKWorkoutTypeIdentifierCycling",
+  "source": "Apple Watch Series 9",
+  "workoutId": "ah_cycle_001",
+  "startDate": "2025-11-15T17:15:00Z",
+  "endDate": "2025-11-15T18:05:00Z",
+  "durationMin": 50,
+  "totalDistanceKm": 19.0,
+  "totalEnergyBurnedKcal": 430,
+  "avgHeartRate": 136
+}

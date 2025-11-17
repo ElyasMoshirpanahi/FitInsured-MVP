@@ -1,0 +1,14 @@
+{
+  "provider": "garmin",
+  "activityId": 800001004,
+  "activityName": "Trail Hike Garmin",
+  "activityType": "hiking",
+  "device": "Fenix 7",
+  "startTime": "2025-11-10T09:00:00Z",
+  "durationSec": 7200,
+  "distanceMeters": 9000.0,
+  "totalAscentMeters": 550.0,
+  "averageHr": 132,
+  "maxHr": 160,
+  "calories": 780
+}

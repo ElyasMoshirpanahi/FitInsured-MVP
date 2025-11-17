@@ -1,0 +1,14 @@
+{
+  "provider": "garmin",
+  "activityId": 800001002,
+  "activityName": "Lunch Ride Garmin",
+  "activityType": "cycling",
+  "device": "Edge 840",
+  "startTime": "2025-11-16T11:30:00Z",
+  "durationSec": 3600,
+  "distanceMeters": 22000.0,
+  "averageHr": 139,
+  "maxHr": 168,
+  "calories": 620,
+  "averageSpeedMps": 6.1
+}
