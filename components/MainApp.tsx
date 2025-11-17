@@ -64,7 +64,7 @@ const DesktopSidebar: React.FC<{ user: User; currentView: string; setCurrentView
 );
 
 const MobileNavBar: React.FC<{ currentView: string; setCurrentView: (view: string) => void; }> = ({ currentView, setCurrentView }) => (
-    <nav className="flex justify-around items-center h-16 bg-white border-t border-gray-200 lg:hidden">
+    <nav className="sticky bottom-0 z-10 flex-shrink-0 flex justify-around items-center h-16 bg-white border-t border-gray-200 lg:hidden">
         {NAV_ITEMS.map(item => <NavItem key={item.id} icon={item.icon} label={item.label} isActive={currentView === item.id} onClick={() => setCurrentView(item.id)} />)}
     </nav>
 );
@@ -148,7 +148,7 @@ const MainApp: React.FC<MainAppProps> = ({ user, onLogout }) => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50 p-0 sm:p-4 font-sans">
+    <div className="flex justify-center items-center h-screen bg-gray-50 p-0 sm:p-4 font-sans">
       {showNotification && (
         <NotificationToast
             title="New Challenge Available!"

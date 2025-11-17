@@ -40,38 +40,51 @@ Here's a glimpse of the FitInsured user experience, from signing up to syncing a
 
 ## 🏗️ Architecture Overview
 
-FitInsured is a **frontend application** designed to run directly in the browser that integrates with the **Opus API**. The application uses the Opus API to run the "Fit & Shred" workflow for Fitcoin calculations, while persisting all user and wallet data in the browser's `localStorage` for a seamless experience across sessions.
+FitInsured is a **frontend-only application** designed to run directly in the browser without a backend. It uses a robust mock API layer that persists all user and wallet data in the browser's `localStorage`, ensuring a seamless experience across sessions.
 
-This architecture demonstrates how to integrate frontend applications directly with serverless workflow engines like Opus.
+This architecture is perfect for rapid prototyping and creating impressive, self-contained demos for competitions.
 
 Here is a diagram illustrating the data flow:
 
 ```mermaid
 graph TD
-    A["User Action (e.g. Sync Activity)"] --> B["UI Component (e.g. WalletView)"]
-    B --> C["Opus API Client (opusClient.ts)"]
-    C --> D["Opus Workflow Execution"]
-    D --> C
-    C --> B
-    B --> E["Update UI State & localStorage"]
-````
+    A[User Action e.g., Login, Sync] --> B{UI Component e.g., LoginPage, WalletView};
+    B --> C[API Service (api.ts)];
+    C --> D[LocalStorage Database];
+    D --> C;
+    C --> B;
+    B --> E[Update UI State];
+```
 
 ---
 
 ## 🧠 Core Concepts Explained
 
-### Fitcoin Calculation via Opus
+### Fitcoin Calculation Engine
 
-The heart of the application is now its integration with the Opus API which runs the "Fit & Shred" workflow. Instead of a mock calculation engine, Fitcoins are calculated by the Opus workflow based on detailed metrics from various health providers.
+The heart of the application is its mock rewards engine. Instead of simple random values, Fitcoins are calculated based on a detailed set of metrics that mimic real-world health providers.
 
-When a user syncs their data:
-1.  The app selects a random provider (Strava, Fitbit, Garmin, Samsung Health, Apple Health, Google Fit, or generic wearable).
-2.  It loads mock data for that provider from the data files.
-3.  The data is converted to the Opus workflow input format.
-4.  The "Fit & Shred" workflow in Opus processes the data and calculates Fitcoins with a maximum cap of 50 per day.
-5.  The results are returned and displayed to the user.
+When a user syncs their data, the app:
+1.  Identifies the user's primary health provider (e.g., Strava).
+2.  Generates a random set of 1-4 realistic activities based on that provider's typical data (e.g., `run_distance`, `active_calories`).
+3.  Calculates the Fitcoin reward for each activity using a predefined conversion rate.
 
-The calculation is handled entirely by the Opus workflow, ensuring consistency and proper business logic implementation.
+```typescript
+// A snippet from services/api.ts
+const FITCOIN_METRICS = {
+  "strava_metrics": {
+    "run_distance": { "unit": "kilometers", "value_per_fitcoin": 2 },
+    "cycle_distance": { "unit": "kilometers", "value_per_fitcoin": 4 },
+    "moving_time": { "unit": "minutes", "value_per_fitcoin": 15 },
+    // ...and many more
+  },
+  "samsung_health_metrics": {
+    "steps": { "unit": "steps", "value_per_fitcoin": 1000 },
+    "active_time": { "unit": "minutes", "value_per_fitcoin": 20 },
+    // ...and many more
+  }
+};
+```
 
 ### Activity Sync Cooldown ⏳
 
