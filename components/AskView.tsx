@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob as GenAIBlob, Chat } from '@google/genai';
-import { Mic, MicOff, Bot, User, Loader2, Send, Sparkles } from 'lucide-react';
+import { Mic, MicOff, Bot, User, Loader2, Send, Sparkles, AlertTriangle } from 'lucide-react';
 
 // --- AUDIO HELPER FUNCTIONS (as per @google/genai guidelines) ---
 
@@ -55,52 +55,46 @@ function createBlob(data: Float32Array): GenAIBlob {
   };
 }
 
-// Simple Markdown Renderer for chat bubbles
+// Enhanced Markdown Renderer to correctly handle lists with inline formatting.
 const MarkdownRenderer: React.FC<{ text: string }> = ({ text }) => {
-    // Process lines for lists
-    const lines = text.split('\n').map((line, index) => {
+    const elements: React.ReactNode[] = [];
+    let listItems: React.ReactNode[] = [];
+
+    const renderInline = (content: string) => {
+        const parts = content.split(/(\*\*.*?\*\*|`.*?`)/g).filter(Boolean);
+        return parts.map((part, i) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+                return <strong key={i}>{part.slice(2, -2)}</strong>;
+            }
+            if (part.startsWith('`') && part.endsWith('`')) {
+                return <code key={i} className="bg-gray-700 rounded px-1 py-0.5 text-sm font-mono">{part.slice(1, -1)}</code>;
+            }
+            return part;
+        });
+    };
+
+    const flushList = () => {
+        if (listItems.length > 0) {
+            elements.push(<ul key={`ul-${elements.length}`} className="list-disc list-inside space-y-1">{listItems}</ul>);
+            listItems = [];
+        }
+    };
+
+    text.split('\n').forEach((line, index) => {
         if (line.trim().startsWith('* ') || line.trim().startsWith('- ')) {
             const content = line.trim().substring(2);
-            // Render inline markdown within the list item
-            const parts = content.split(/(\*\*.*?\*\*|`.*?`)/g).filter(Boolean);
-            return (
-                <li key={index}>
-                    {parts.map((part, i) => {
-                        if (part.startsWith('**') && part.endsWith('**')) {
-                            return <strong key={i}>{part.slice(2, -2)}</strong>;
-                        }
-                        if (part.startsWith('`') && part.endsWith('`')) {
-                            return <code key={i} className="bg-gray-700 rounded px-1 py-0.5 text-sm font-mono">{part.slice(1, -1)}</code>;
-                        }
-                        return part;
-                    })}
-                </li>
-            );
+            listItems.push(<li key={index}>{renderInline(content)}</li>);
+        } else {
+            flushList();
+            if (line.trim()) {
+                elements.push(<p key={index} className="min-h-[1em]">{renderInline(line)}</p>);
+            }
         }
-        return line;
     });
 
-    const renderedContent = lines.map((line, index) => {
-        if (typeof line === 'string') {
-            const parts = line.split(/(\*\*.*?\*\*|`.*?`)/g).filter(Boolean);
-            return (
-                <p key={index} className="min-h-[1em]">
-                    {parts.map((part, i) => {
-                        if (part.startsWith('**') && part.endsWith('**')) {
-                            return <strong key={i}>{part.slice(2, -2)}</strong>;
-                        }
-                         if (part.startsWith('`') && part.endsWith('`')) {
-                            return <code key={i} className="bg-gray-700 rounded px-1 py-0.5 text-sm font-mono">{part.slice(1, -1)}</code>;
-                        }
-                        return part;
-                    })}
-                </p>
-            );
-        }
-        return <ul key={index} className="list-disc list-inside space-y-1">{line}</ul>; // Render the <li> element
-    });
+    flushList();
 
-    return <div className="space-y-2">{renderedContent}</div>;
+    return <div className="space-y-2">{elements}</div>;
 };
 
 const suggestedPrompts = [
@@ -109,7 +103,6 @@ const suggestedPrompts = [
   { text: "Explain the Savings Tiers.", emoji: "📈" },
   { text: "What's the best value in the Marketplace?", emoji: "🛒" },
 ];
-
 
 const Headlines: React.FC<{
   prompts: { text: string; emoji: string }[];
@@ -169,8 +162,15 @@ const SuggestionsTicker: React.FC<{
 
 const AskView: React.FC = () => {
     type ConnectionState = 'idle' | 'connecting' | 'connected' | 'error';
+    interface TranscriptItem {
+      speaker: 'user' | 'model';
+      text: string;
+      isError?: boolean;
+      onRetry?: () => void;
+    }
+
     const [connectionState, setConnectionState] = useState<ConnectionState>('idle');
-    const [transcript, setTranscript] = useState<{ speaker: 'user' | 'model'; text: string }[]>([]);
+    const [transcript, setTranscript] = useState<TranscriptItem[]>([]);
     const [currentInput, setCurrentInput] = useState('');
     const [currentOutput, setCurrentOutput] = useState('');
     const [textInput, setTextInput] = useState('');
@@ -246,7 +246,7 @@ Your knowledge includes:
 
 When interacting with users:
 - Always be encouraging and positive.
-- Proactively offer tips and suggestions related to the app. For example, if they ask about their balance, you could mention the MATIC valuation and suggest staking some FIT to earn more.
+- If the user asks about their Fitcoin balance, you MUST proactively mention its estimated value based on the MATIC conversion and suggest staking as a way to earn more.
 - Keep your answers concise and conversational. Use Markdown for lists or emphasis.
 - After EVERY response, you MUST generate 2-3 short, relevant follow-up questions based on the current conversation to guide the user. Format these suggestions inside a [SUGGESTIONS] block like this example:
 [SUGGESTIONS]
@@ -270,6 +270,11 @@ When interacting with users:
             outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
             
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+            
+            const retryVoice = () => {
+                setTranscript(t => t.filter(i => !i.isError));
+                startConversation();
+            };
 
             sessionPromiseRef.current = ai.live.connect({
                 model: 'gemini-2.5-flash-native-audio-preview-09-2025',
@@ -329,6 +334,7 @@ When interacting with users:
                     onerror: (e: ErrorEvent) => {
                         console.error('Session error:', e);
                         setConnectionState('error');
+                        setTranscript(prev => [...prev, { speaker: 'model', text: 'A connection error occurred.', isError: true, onRetry: retryVoice }]);
                         stopConversation();
                     },
                     onclose: (e: CloseEvent) => {
@@ -359,7 +365,12 @@ When interacting with users:
         setContextualSuggestions([]);
         setTranscript(prev => [...prev, { speaker: 'user', text: userMessage }]);
         setIsModelResponding(true);
-        setTranscript(prev => [...prev, { speaker: 'model', text: '' }]); // Placeholder for model's response
+        setTranscript(prev => [...prev, { speaker: 'model', text: '' }]); // Placeholder
+
+        const retry = () => {
+            setTranscript(prev => prev.slice(0, -2)); // Remove user msg and error msg
+            handleSendTextMessage(userMessage);
+        };
 
         try {
             if (!chatRef.current) {
@@ -376,8 +387,9 @@ When interacting with users:
                 const chunkText = chunk.text;
                 setTranscript(prev => {
                     const newTranscript = [...prev];
-                    if (newTranscript.length > 0) {
-                        newTranscript[newTranscript.length - 1].text += chunkText;
+                    const lastMsg = newTranscript[newTranscript.length - 1];
+                    if (lastMsg && lastMsg.speaker === 'model') {
+                        lastMsg.text += chunkText;
                     }
                     return newTranscript;
                 });
@@ -387,16 +399,20 @@ When interacting with users:
             console.error("Failed to send message:", error);
             setTranscript(prev => {
                 const newTranscript = [...prev];
-                newTranscript[newTranscript.length-1].text = "Sorry, I encountered an error. Please try again.";
+                const lastMsg = newTranscript[newTranscript.length - 1];
+                if (lastMsg && lastMsg.speaker === 'model') {
+                    lastMsg.text = "Sorry, I couldn't connect. Please try again.";
+                    lastMsg.isError = true;
+                    lastMsg.onRetry = retry;
+                }
                 return newTranscript;
             });
         } finally {
             setIsModelResponding(false);
-            // Post-processing after stream is complete
             setTranscript(prev => {
                 const newTranscript = [...prev];
                 const lastMessage = newTranscript[newTranscript.length - 1];
-                if (!lastMessage || lastMessage.speaker !== 'model') return prev;
+                if (!lastMessage || lastMessage.speaker !== 'model' || lastMessage.isError) return prev;
 
                 const suggestionBlockRegex = /\[SUGGESTIONS\]\n?([\s\S]*?)\n?\[\/SUGGESTIONS\]/;
                 const match = lastMessage.text.match(suggestionBlockRegex);
@@ -460,7 +476,7 @@ When interacting with users:
     const displayInput = isVoiceActive ? (currentInput ? currentInput + '...' : '') : textInput;
 
     return (
-        <div className="flex flex-col h-full bg-gray-900 rounded-xl shadow-md overflow-hidden">
+        <div className="flex flex-col h-full bg-gray-900 shadow-md overflow-hidden">
             <style>{`
                 .chat-area-background {
                     background-color: #111;
@@ -477,6 +493,13 @@ When interacting with users:
                 }
                 .group-hover\\:pause:hover {
                     animation-play-state: paused;
+                }
+                @keyframes bounce {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-4px); }
+                }
+                .animate-bounce {
+                    animation: bounce 1s infinite ease-in-out;
                 }
             `}</style>
             <header className="p-4 border-b border-white/10 flex-shrink-0 bg-gray-900/50 backdrop-blur-sm">
@@ -500,8 +523,26 @@ When interacting with users:
                         {entry.speaker === 'model' && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center"><Bot className="w-5 h-5 text-indigo-400" /></div>}
                         <div className={`max-w-xs md:max-w-md p-3 rounded-xl shadow-sm ${entry.speaker === 'user' ? 'bg-indigo-500 text-white' : 'bg-gray-800 text-gray-200'}`}>
                             <div className="text-sm">
-                                {entry.speaker === 'model' ? <MarkdownRenderer text={entry.text} /> : <p>{entry.text}</p>}
-                                {isModelResponding && index === transcript.length - 1 && <span className="inline-block w-1 h-3 bg-white/50 animate-pulse ml-1"></span>}
+                                {isModelResponding && index === transcript.length - 1 && entry.text === '' && !entry.isError ? (
+                                    <div className="flex items-center space-x-1 p-2">
+                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
+                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}} />
+                                    </div>
+                                ) : (
+                                    <>
+                                        {entry.speaker === 'model' ? <MarkdownRenderer text={entry.text} /> : <p>{entry.text}</p>}
+                                        {isModelResponding && index === transcript.length - 1 && <span className="inline-block w-1 h-3 bg-white/50 animate-pulse ml-1"></span>}
+                                    </>
+                                )}
+                                {entry.isError && (
+                                    <div className="mt-2 pt-2 border-t border-white/10">
+                                        <button onClick={entry.onRetry} className="text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white py-1 px-3 rounded-full flex items-center">
+                                            <AlertTriangle className="w-3 h-3 mr-1.5" />
+                                            Retry
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                         {entry.speaker === 'user' && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center"><User className="w-5 h-5 text-gray-300" /></div>}

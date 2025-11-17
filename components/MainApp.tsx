@@ -151,6 +151,8 @@ const MainApp: React.FC<MainAppProps> = ({ user, onLogout }) => {
     }
   };
 
+  const mainContentPadding = currentView === 'ask' ? '' : 'p-4';
+
   return (
     <div className="flex justify-center items-center h-screen bg-gray-50 p-0 sm:p-4 font-sans">
       {showNotification && (
@@ -174,7 +176,7 @@ const MainApp: React.FC<MainAppProps> = ({ user, onLogout }) => {
               </button>
             </header>
 
-            <main className="flex-grow p-4 overflow-y-auto bg-gray-50/50">
+            <main className={`flex-grow overflow-y-auto bg-gray-50/50 ${mainContentPadding}`}>
               {renderContent()}
             </main>
             
