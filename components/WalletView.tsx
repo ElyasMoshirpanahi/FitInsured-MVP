@@ -37,6 +37,13 @@ const useInterval = (callback: () => void, delay: number | null) => {
   }, [delay]);
 };
 
+// SVG for Polygon (MATIC) logo
+const PolygonIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M790.272 512l155.648-269.888a32 32 0 00-16.128-43.008L604.288 64a32 32 0 00-32.256 0l-325.504 135.232a32 32 0 00-16.128 43.008L386.048 512l-155.648 269.888a32 32 0 0016.128 43.008l325.504 135.232a32 32 0 0032.256 0l325.504-135.232a32 32 0 0016.128-43.008L790.272 512zM512 734.528L309.696 512 512 289.472 714.304 512 512 734.528z" />
+    </svg>
+);
+
 // Animated number component
 const AnimatedBalance = ({ endValue }: { endValue: number }) => {
     const [currentValue, setCurrentValue] = useState(endValue);
@@ -158,9 +165,18 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
   const [displayCurrency, setDisplayCurrency] = useState<'fit' | 'matic'>('fit');
   // Use a simulated, hardcoded price for MATIC to ensure stability and avoid API errors.
   const maticPrice = 0.58; 
+  const [isWeb3Connected, setIsWeb3Connected] = useState(false);
   
   const COOLDOWN_STORAGE_KEY = `fitcoinSyncCooldown_${user.userId}`;
   const [cooldownTime, setCooldownTime] = useState<number | null>(null);
+  
+    useEffect(() => {
+    // Simulate a slight delay for connecting to the "blockchain"
+    const timer = setTimeout(() => {
+      setIsWeb3Connected(true);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const expiryTimestamp = localStorage.getItem(COOLDOWN_STORAGE_KEY);
@@ -309,9 +325,22 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
         <header className={`relative bg-indigo-600 p-6 rounded-xl shadow-lg text-white transition-colors duration-300 ${isBalanceAnimating ? 'balance-flash-anim' : ''}`}>
           <div className="flex justify-between items-center">
               <p className="text-sm font-light opacity-80">Total Balance</p>
-              <div title="You can earn a maximum of 50 FIT per day from activities to ensure fairness." className="flex items-center cursor-help">
-                <p className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">Cap: 50 FIT/day</p>
-                <Info className="w-4 h-4 ml-1.5 opacity-70" />
+              <div className="flex items-center text-xs font-medium">
+                {isWeb3Connected ? (
+                    <div className="flex items-center bg-white/20 px-2 py-1 rounded-full">
+                        <span className="relative flex h-2 w-2 mr-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <PolygonIcon />
+                        <span className="ml-1.5 text-white">Polygon Mainnet</span>
+                    </div>
+                ) : (
+                    <div className="flex items-center bg-white/20 px-2 py-1 rounded-full">
+                        <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
+                        <span>Connecting...</span>
+                    </div>
+                )}
               </div>
           </div>
           <button 
