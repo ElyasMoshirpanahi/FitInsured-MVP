@@ -1,11 +1,10 @@
 
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import type { User, WalletSummary, Challenge, JobStatus, Activity } from '../types';
 import { JobState } from '../types';
-import { getChallenges } from '../services/api';
-import { runJobAndWait } from '../services/opusClient';
-import { loadMockProviderPayload, buildWorkflowInputFromProvider, Provider } from '../services/mockProviderLoader';
-import { Loader2, Activity as ActivityIcon, BarChart3, TrendingUp, AlertCircle, Zap, Info, Footprints, Moon, Bike, Award } from 'lucide-react';
+import { simulateActivity, getJobStatus, getChallenges } from '../services/api';
+import { Loader2, Activity as ActivityIcon, BarChart3, TrendingUp, AlertCircle, Zap, Info, Footprints, Moon, Bike, Award, Repeat } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface WalletViewProps {
@@ -37,6 +36,13 @@ const useInterval = (callback: () => void, delay: number | null) => {
     }
   }, [delay]);
 };
+
+// SVG for Polygon (MATIC) logo
+const PolygonIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M790.272 512l155.648-269.888a32 32 0 00-16.128-43.008L604.288 64a32 32 0 00-32.256 0l-325.504 135.232a32 32 0 00-16.128 43.008L386.048 512l-155.648 269.888a32 32 0 0016.128 43.008l325.504 135.232a32 32 0 0032.256 0l325.504-135.232a32 32 0 0016.128-43.008L790.272 512zM512 734.528L309.696 512 512 289.472 714.304 512 512 734.528z" />
+    </svg>
+);
 
 // Animated number component
 const AnimatedBalance = ({ endValue }: { endValue: number }) => {
@@ -128,7 +134,7 @@ const ReportModal: React.FC<{
                         <Award className="w-12 h-12 text-green-500" />
                         <h3 className="text-2xl font-extrabold text-gray-800 mt-3">Congratulations!</h3>
                         <p className="text-gray-600 mt-1">You've earned</p>
-                        <p className="text-4xl font-bold text-green-600 my-2 animate-pop-in">{jobResult?.fitcoinDelta?.toFixed(2)} FIT</p>
+                        <p className="text-4xl font-bold text-green-600 my-2 animate-pop-in">{(jobResult?.fitcoinDelta ?? 0).toFixed(2)} FIT</p>
                         <p className="text-sm text-gray-500 mt-3">Great work! Come back in 1 hour to sync again and earn more.</p>
                         <button onClick={onClose} className="mt-4 bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg text-sm">Done</button>
                     </div>
@@ -148,14 +154,29 @@ const ReportModal: React.FC<{
 
 const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error, onRefresh, navigateToCommunity }) => {
   const [isSimulating, setIsSimulating] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [pollingDelay, setPollingDelay] = useState<number | null>(null);
   const [suggestedChallenges, setSuggestedChallenges] = useState<Challenge[]>([]);
-
+  
   const [jobResult, setJobResult] = useState<JobStatus | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBalanceAnimating, setIsBalanceAnimating] = useState(false);
 
+  const [displayCurrency, setDisplayCurrency] = useState<'fit' | 'matic'>('fit');
+  // Use a simulated, hardcoded price for MATIC to ensure stability and avoid API errors.
+  const maticPrice = 0.58; 
+  const [isWeb3Connected, setIsWeb3Connected] = useState(false);
+  
   const COOLDOWN_STORAGE_KEY = `fitcoinSyncCooldown_${user.userId}`;
   const [cooldownTime, setCooldownTime] = useState<number | null>(null);
+  
+    useEffect(() => {
+    // Simulate a slight delay for connecting to the "blockchain"
+    const timer = setTimeout(() => {
+      setIsWeb3Connected(true);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const expiryTimestamp = localStorage.getItem(COOLDOWN_STORAGE_KEY);
@@ -197,55 +218,43 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
     fetchSuggestions();
   }, [summary]);
 
+  const pollJobStatus = useCallback(async () => {
+    if (!jobId) return;
+
+    const status = await getJobStatus(jobId);
+
+    if (status.status === JobState.COMPLETED) {
+      setPollingDelay(null);
+      setJobId(null);
+      setJobResult(status);
+      setIsModalOpen(true);
+      setIsSimulating(false);
+    } else if (status.status === JobState.FAILED) {
+      setPollingDelay(null);
+      setJobId(null);
+      setIsSimulating(false);
+      // You could add an error toast here
+    }
+  }, [jobId]);
+
+  useInterval(pollJobStatus, pollingDelay);
+
   const handleSyncData = async () => {
     setIsSimulating(true);
     try {
-      // Pick a random provider to simulate from
-      const providers: Provider[] = ["strava", "fitbit", "garmin", "samsung_health", "apple_health", "google_fit", "generic_wearable"];
-      const randomProvider: Provider = providers[Math.floor(Math.random() * providers.length)];
-
-      // Load mock data for the selected provider
-      const mockPayload = await loadMockProviderPayload(randomProvider);
-
-      // Build the workflow input for Opus
-      const workflowInput = await buildWorkflowInputFromProvider(
-        randomProvider,
-        mockPayload,
-        user.userId,
-        new Date().toISOString()
-      );
-
-      // Run the Opus job and wait for completion
-      const jobResult = await runJobAndWait(workflowInput, {
-        pollIntervalMs: 1500,
-        timeoutMs: 60000
-      });
-
-      // Extract the result from Opus
-      const opusResult = jobResult.result;
-
-      // Create job result compatible with existing UI
-      const result: JobStatus = {
-        jobId: jobResult.jobId,
-        status: JobState.COMPLETED,
-        fitcoinDelta: opusResult?.totalFitcoinAwarded || 0,
-        newBalance: (summary?.balance || 0) + (opusResult?.totalFitcoinAwarded || 0),
-        generatedActivities: opusResult?.activities || [] // Assuming Opus returns activities in this format
-      };
-
-      setJobResult(result);
-      setIsModalOpen(true);
-      setIsSimulating(false);
+      const { jobId: newJobId } = await simulateActivity(user.userId);
+      setJobId(newJobId);
+      setPollingDelay(1500); // Start polling
     } catch (err) {
       setIsSimulating(false);
-      console.error('Error syncing activity:', err);
-      // You could add an error toast here
+       // You could add an error toast here
     }
   };
   
   const handleModalClose = () => {
       setIsModalOpen(false);
       setJobResult(null);
+      onRefresh();
 
       // Set cooldown for 1 hour
       const expiry = Date.now() + 60 * 60 * 1000;
@@ -255,8 +264,6 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
       // Trigger the flash animation
       setIsBalanceAnimating(true);
       setTimeout(() => setIsBalanceAnimating(false), 1500); // Match animation duration
-
-      onRefresh(); // Refresh the data to get the latest from storage
   };
 
   const formatCooldown = (seconds: number): string => {
@@ -266,7 +273,6 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
   };
 
   const chartData = summary?.last7Days.map(d => ({
-    // FIX: Corrected typo from toLocaleDateTimeString to toLocaleDateString.
     name: new Date(d.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }),
     fitcoin: d.fitcoinEarned,
   })) || [];
@@ -285,6 +291,9 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
   
   const weeklyTotal = summary.last7Days.reduce((sum, day) => sum + day.fitcoinEarned, 0);
   const isOnCooldown = cooldownTime !== null && cooldownTime > 0;
+  
+  const maticAmount = summary.balance / 10;
+  const usdValue = maticPrice ? maticAmount * maticPrice : null;
 
   return (
     <div className="space-y-6">
@@ -311,51 +320,82 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
             animation: balance-flash 1.5s ease-out;
         }
       `}</style>
-      <header className={`bg-indigo-600 p-6 rounded-xl shadow-lg text-white transition-colors duration-300 ${isBalanceAnimating ? 'balance-flash-anim' : ''}`}>
-        <div className="flex justify-between items-center">
-            <p className="text-sm font-light opacity-80">Total Balance</p>
-            <div title="You can earn a maximum of 50 FIT per day from activities to ensure fairness." className="flex items-center cursor-help">
-              <p className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">Cap: 50 FIT/day</p>
-              <Info className="w-4 h-4 ml-1.5 opacity-70" />
-            </div>
-        </div>
-        <h2 className="text-5xl font-extrabold my-1">
-            <AnimatedBalance endValue={summary.balance} />
-            <span className="text-2xl font-medium opacity-90"> FIT</span>
-        </h2>
-        <p className="text-lg font-light opacity-80">
-          +{summary.today.fitcoinEarned.toFixed(2)} today · +{weeklyTotal.toFixed(2)} this week
-        </p>
-      </header>
       
-      <div className="space-y-4">
-        <button 
-          onClick={handleSyncData} 
-          disabled={isSimulating || isOnCooldown} 
-          className={`w-full font-bold py-4 px-6 rounded-lg flex items-center justify-center shadow-lg transform transition disabled:scale-100 
-            ${isOnCooldown 
-              ? 'bg-gray-400 text-white cursor-not-allowed' 
-              : 'bg-green-500 text-white hover:scale-105 hover:bg-green-600'
-            }`
-          }
-        >
-          {isSimulating ? (
-            <>
-              <Loader2 className="w-6 h-6 mr-3 animate-spin" />
-              Syncing...
-            </>
-          ) : isOnCooldown ? (
-             <>
-              <span role="img" aria-label="hourglass" className="mr-3 text-xl">⏳</span>
-              Next sync in {formatCooldown(cooldownTime)}
-            </>
-          ) : (
-             <>
-              <Zap className="w-6 h-6 mr-3" />
-              Sync Activity Data
-            </>
-          )}
-        </button>
+      <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-6 lg:items-center">
+        <header className={`relative bg-indigo-600 p-6 rounded-xl shadow-lg text-white transition-colors duration-300 ${isBalanceAnimating ? 'balance-flash-anim' : ''}`}>
+          <div className="flex justify-between items-center">
+              <p className="text-sm font-light opacity-80">Total Balance</p>
+              <div className="flex items-center text-xs font-medium">
+                {isWeb3Connected ? (
+                    <div className="flex items-center bg-white/20 px-2 py-1 rounded-full">
+                        <span className="relative flex h-2 w-2 mr-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <PolygonIcon />
+                        <span className="ml-1.5 text-white">Polygon Mainnet</span>
+                    </div>
+                ) : (
+                    <div className="flex items-center bg-white/20 px-2 py-1 rounded-full">
+                        <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
+                        <span>Connecting...</span>
+                    </div>
+                )}
+              </div>
+          </div>
+          <button 
+            onClick={() => setDisplayCurrency(c => c === 'fit' ? 'matic' : 'fit')} 
+            className="w-full text-left focus:outline-none focus:ring-2 focus:ring-white/50 rounded-lg py-1 -my-1"
+            aria-label="Toggle currency display"
+          >
+            <h2 className="text-5xl font-extrabold my-2 flex items-baseline flex-wrap">
+              <AnimatedBalance endValue={displayCurrency === 'fit' ? summary.balance : maticAmount} />
+              <span className="text-2xl font-medium opacity-90 ml-2">{displayCurrency === 'fit' ? 'FIT' : 'MATIC'}</span>
+              {usdValue != null && (
+                <span className="text-xl font-light opacity-80 ml-4">
+                  ≈ ${usdValue.toFixed(2)} USD
+                </span>
+              )}
+            </h2>
+          </button>
+           <div className="text-sm font-light opacity-80 h-5 mt-1">
+             <span>Based on 1 MATIC ≈ ${maticPrice.toFixed(2)} USD</span>
+          </div>
+          <div className="absolute bottom-2 right-2 text-white/50 flex items-center text-xs pointer-events-none">
+            <Repeat className="w-3 h-3 mr-1" />
+            <span>Tap to convert</span>
+          </div>
+        </header>
+        
+        <div className="mt-6 lg:mt-0">
+          <button 
+            onClick={handleSyncData} 
+            disabled={isSimulating || isOnCooldown} 
+            className={`w-full font-bold py-4 px-6 rounded-lg flex items-center justify-center shadow-lg transform transition disabled:scale-100 lg:py-6
+              ${isOnCooldown 
+                ? 'bg-gray-400 text-white cursor-not-allowed' 
+                : 'bg-green-500 text-white hover:scale-105 hover:bg-green-600'
+              }`
+            }
+          >
+            {isSimulating ? (
+              <>
+                <Loader2 className="w-6 h-6 mr-3 animate-spin" />
+                Syncing...
+              </>
+            ) : isOnCooldown ? (
+               <>
+                <span role="img" aria-label="hourglass" className="mr-3 text-xl">⏳</span>
+                Next sync in {formatCooldown(cooldownTime)}
+              </>
+            ) : (
+               <>
+                <Zap className="w-6 h-6 mr-3" />
+                Sync Activity Data
+              </>
+            )}
+          </button>
+        </div>
       </div>
       
       <div className="bg-white p-4 rounded-xl shadow-md">
@@ -383,7 +423,7 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
                       <p className="text-xs text-gray-500">{activity.metric}</p>
                     </div>
                   </div>
-                  <p className="font-bold text-green-600">+ {activity.fitcoin.toFixed(2)} FIT</p>
+                  <p className="font-bold text-green-600">+ {(activity.fitcoin ?? 0).toFixed(2)} FIT</p>
                 </div>
               );
             })}

@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Loader2, User, Mail, BarChart3, Heart, Watch, Zap, Footprints, Moon, Bike, KeyRound, Award } from 'lucide-react';
+import { Loader2, User, Mail, BarChart3, Heart, Watch, Zap, Footprints, Moon, Bike, KeyRound, Award, HeartPulse, Activity } from 'lucide-react';
 import { signup } from '../services/api';
 import type { User as UserType } from '../types';
 import Confetti from './Confetti';
@@ -10,9 +11,11 @@ interface OnboardingPageProps {
 }
 
 const HEALTH_PROVIDERS = [
-  { id: 'strava', name: 'Strava', icon: BarChart3 },
   { id: 'apple_health', name: 'Apple Health', icon: Heart },
+  { id: 'fitbit', name: 'Fitbit', icon: Activity },
+  { id: 'google_fit', name: 'Google Fit', icon: HeartPulse },
   { id: 'samsung_health', name: 'Samsung Health', icon: Watch },
+  { id: 'strava', name: 'Strava', icon: BarChart3 },
   { id: 'wearables', name: 'Wearables', icon: Zap },
 ];
 
@@ -102,11 +105,11 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onLogin, onBackToLogin 
                   <div className="space-y-4 animate-fade-in">
                     <h3 className="font-bold text-lg text-gray-800">Connect Your Health Data</h3>
                     <p className="text-sm text-gray-600">Select your primary data source. You can add more later.</p>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                       {HEALTH_PROVIDERS.map(provider => (
                         <button type="button" key={provider.id} onClick={() => setPrimaryProvider(provider.id)} className={`p-4 border rounded-lg flex flex-col items-center justify-center transition ${primaryProvider === provider.id ? 'ring-2 ring-indigo-500 border-indigo-500 bg-indigo-50' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
                           <provider.icon className="w-8 h-8 text-indigo-600 mb-2" />
-                          <span className="font-semibold text-sm text-gray-700">{provider.name}</span>
+                          <span className="font-semibold text-sm text-center text-gray-700">{provider.name}</span>
                         </button>
                       ))}
                     </div>
@@ -151,7 +154,7 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onLogin, onBackToLogin 
             }
             .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
         `}</style>
-        <div className="w-full max-w-md bg-white shadow-xl rounded-2xl h-[800px] md:h-[90vh] flex flex-col items-center justify-center p-8 text-center animate-fade-in">
+        <div className="w-full max-w-md bg-white shadow-xl rounded-2xl min-h-[500px] flex flex-col items-center justify-center p-8 text-center animate-fade-in">
           <Award className="w-20 h-20 text-green-500 mb-6" />
           <h1 className="text-3xl font-extrabold text-gray-800">Welcome, {signedUpUser.displayName}!</h1>
           <p className="text-lg text-gray-600 mt-2 mb-8">Here is your welcome gift.</p>
@@ -168,7 +171,7 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ onLogin, onBackToLogin 
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-50 p-4">
-      <div className="w-full max-w-md bg-white shadow-xl rounded-2xl overflow-hidden flex flex-col h-[800px] md:h-[90vh]">
+      <div className="w-full max-w-md bg-white shadow-xl rounded-2xl overflow-hidden flex flex-col min-h-[700px]">
         <header className="p-4 pt-8 bg-white border-b border-gray-100 text-center">
           <h1 className="text-2xl font-extrabold text-gray-800">Complete Your Profile</h1>
           <p className="text-gray-500 text-sm mt-1">Step {step} of 3</p>

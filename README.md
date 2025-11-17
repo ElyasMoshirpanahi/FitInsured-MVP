@@ -1,18 +1,17 @@
+# Fitcoin Wallet 🏋️‍♂️💰
 
-# FitInsured Wallet 🏋️‍♂️💰
-
-![FitInsured Banner](https://i.imgur.com/8a6B5N5.png)
+![Fitcoin Banner](https://i.imgur.com/8a6B5N5.png)
 
 <div align="center">
 
 [![React](https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-green?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![Vite](https://img.shields.io/badge/Environment-Gemini_App_Builder-orange?style=for-the-badge&logo=vite)](https://developers.google.com/gemini/app-builder)
+[![Gemini API](https://img.shields.io/badge/Gemini_API-v1-purple?style=for-the-badge&logo=google-gemini)](https://ai.google.dev/)
 
 </div>
 
-**FitInsured** is a modern web application that gamifies health and wellness by rewarding users with "Fitcoins" for their physical activities. This project demonstrates a complete, professional, and responsive user experience, from a celebratory onboarding flow to a feature-rich wallet dashboard.
+**Fitcoin** is a modern web application that gamifies health and wellness by rewarding users with "Fitcoins" for their physical activities. This project demonstrates a complete, professional, and responsive user experience, from a celebratory onboarding flow to a feature-rich wallet dashboard, now including a conversational AI assistant to guide users on their fitness journey.
 
 ---
 
@@ -21,6 +20,7 @@
 -   🔐 **Secure User Authentication:** A complete, multi-step signup and login flow with persistent sessions.
 -   📊 **Interactive Wallet Dashboard:** A central hub to view your Fitcoin balance, today's earnings, and a 7-day performance chart.
 -   🔄 **Dynamic Activity Sync:** Simulate syncing data from various health providers (Strava, Apple Health, etc.) with a realistic 1-hour cooldown mechanism.
+-   💬 **Conversational AI Assistant:** Chat with a Gemini-powered AI via voice or text. Get real-time answers about the app, receive fitness tips, and stay motivated with a helpful, knowledgeable companion.
 -   💰 **Metric-Based Fitcoin Calculation:** A sophisticated system calculates rewards based on detailed metrics for various activities like running, cycling, and sleeping.
 -   📈 **Staking & Savings Tiers:** "Staking Programs" that allow users to lock up their Fitcoins to earn an annual yield, with benefits unlocking at different tiers.
 -   🛒 **Provider Rewards Marketplace:** Redeem Fitcoins for exclusive real-world rewards like gym passes, healthy snacks, and wellness app trials.
@@ -32,50 +32,58 @@
 
 ## 🚀 Live Demo in Action
 
-Here's a glimpse of the FitInsured user experience, from signing up to syncing an activity and claiming a reward.
-
-
+Here's a glimpse of the Fitcoin user experience, from signing up to syncing an activity, and now, conversing with your personal AI health coach.
 
 ---
 
 ## 🏗️ Architecture Overview
 
-FitInsured is a **frontend application** designed to run directly in the browser that integrates with the **Opus API**. The application uses the Opus API to run the "Fit & Shred" workflow for Fitcoin calculations, while persisting all user and wallet data in the browser's `localStorage` for a seamless experience across sessions.
+Fitcoin is a **frontend-only application** designed to run directly in the browser without a backend. It uses a robust mock API layer that persists all user and wallet data in the browser's `localStorage`, ensuring a seamless experience across sessions.
 
-This architecture demonstrates how to integrate frontend applications directly with serverless workflow engines like Opus.
+This architecture is perfect for rapid prototyping and creating impressive, self-contained demos.
 
 Here is a diagram illustrating the data flow:
 
 ```mermaid
 graph TD
-    A[User Action e.g., Sync Activity] --> B{UI Component e.g., WalletView};
-    B --> C[Opus API Client (opusClient.ts)];
-    C --> D[Opus Workflow Execution];
+    A[User Action e.g., Login, Sync, Ask AI] --> B{UI Component e.g., LoginPage, WalletView, AskView};
+    B --> C[API Service (api.ts)];
+    C --> D[LocalStorage Database];
     D --> C;
     C --> B;
-    B --> E[Update UI State & LocalStorage];
+    B --> E[Update UI State];
 ```
 
 ---
 
 ## 🧠 Core Concepts Explained
 
-### Fitcoin Calculation via Opus
+### Gemini-Powered AI Assistant
 
-The heart of the application is now its integration with the Opus API which runs the "Fit & Shred" workflow. Instead of a mock calculation engine, Fitcoins are calculated by the Opus workflow based on detailed metrics from various health providers.
+The "Ask" tab provides a state-of-the-art conversational experience powered by Google's Gemini models. It supports seamless dual-mode interaction:
+-   **Real-Time Voice Chat:** Leveraging the **Gemini 2.5 Native Audio (Live API)**, users can have fluid, real-time voice conversations. The app handles live audio streaming, transcription, and audio playback for a natural back-and-forth dialogue.
+-   **Text-Based Chat:** For situations where voice isn't ideal, users can type messages. The interface dynamically switches from a microphone to a send button, using the Gemini API's chat functionality for quick and accurate text responses.
 
-When a user syncs their data:
-1.  The app selects a random provider (Strava, Fitbit, Garmin, Samsung Health, Apple Health, Google Fit, or generic wearable).
-2.  It loads mock data for that provider from the data files.
-3.  The data is converted to the Opus workflow input format.
-4.  The "Fit & Shred" workflow in Opus processes the data and calculates Fitcoins with a maximum cap of 50 per day.
-5.  The results are returned and displayed to the user.
+The AI is equipped with a detailed system prompt, making it an expert on the entire Fitcoin ecosystem, ready to provide helpful hints and encouragement.
 
-The calculation is handled entirely by the Opus workflow, ensuring consistency and proper business logic implementation.
+### Fitcoin Calculation Engine
+
+The heart of the application is its mock rewards engine. Instead of simple random values, Fitcoins are calculated based on a detailed set of metrics that mimic real-world health providers. When a user syncs their data, the app generates a random set of realistic activities and calculates the Fitcoin reward for each using a predefined conversion rate.
+
+```typescript
+// A snippet from services/api.ts
+const FITCOIN_METRICS = {
+  "strava_metrics": {
+    "run_distance": { "unit": "kilometers", "value_per_fitcoin": 2 },
+    "active_calories": { "unit": "kcal", "value_per_fitcoin": 100 },
+    // ...and many more
+  }
+};
+```
 
 ### Activity Sync Cooldown ⏳
 
-To encourage regular engagement and prevent spamming, the "Sync Activity Data" button has a **1-hour cooldown**. The button is disabled during this period and displays a clear countdown timer, providing excellent user feedback and creating a more balanced user experience.
+To encourage regular engagement, the "Sync Activity Data" button has a **1-hour cooldown**. The button is disabled during this period and displays a clear countdown timer, providing excellent user feedback.
 
 ---
 
@@ -83,6 +91,7 @@ To encourage regular engagement and prevent spamming, the "Sync Activity Data" b
 
 -   **Framework:** [React 19](https://react.dev/)
 -   **Language:** [TypeScript](https://www.typescriptlang.org/)
+-   **AI/ML:** [@google/genai](https://www.npmjs.com/package/@google/genai) for Gemini API integration
 -   **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 -   **Icons:** [Lucide React](https://lucide.dev/)
 -   **Charting:** [Recharts](https://recharts.org/)
@@ -97,10 +106,9 @@ The project is organized into a clean and maintainable structure.
 
 ```
 /
-├── public/
-│   └── (Static assets if any)
 ├── src/
 │   ├── components/
+│   │   ├── AskView.tsx           # Conversational AI chat view
 │   │   ├── CommunityView.tsx     # Community tab UI
 │   │   ├── Confetti.tsx          # Reusable celebration animation
 │   │   ├── LandingPage.tsx       # Initial landing page
@@ -113,11 +121,7 @@ The project is organized into a clean and maintainable structure.
 │   ├── services/
 │   │   └── api.ts                # Mock API and data logic
 │   ├── data/
-│   │   ├── apple_health/         # Mock data files
-│   │   ├── fitbit/
-│   │   ├── garmin/
-│   │   ├── samsung_health/
-│   │   └── strava/
+│   │   └── (Mock provider data files)
 │   ├── App.tsx                   # Root component, handles routing
 │   ├── index.tsx                 # Application entry point
 │   └── types.ts                  # TypeScript interfaces
@@ -131,9 +135,9 @@ The project is organized into a clean and maintainable structure.
 
 This project is built for a modern browser environment like **Gemini App Builder** and requires no local installation or build step.
 
-1.  **No Installation:** There are no `node_modules` to install.
-2.  **Dependencies:** All dependencies (React, Lucide, etc.) are loaded directly from a CDN via the `importmap` in `index.html`.
-3.  **Run:** Simply open the `index.html` file in a compatible web environment or a simple live server.
+1.  **Environment Variable:** You must set the `API_KEY` environment variable with your Google Gemini API key for the "Ask" feature to work.
+2.  **No Installation:** There are no `node_modules` to install. All dependencies are loaded directly from a CDN via the `importmap` in `index.html`.
+3.  **Run:** Simply open the `index.html` file in a compatible web environment or use a simple live server.
 
 ---
 
@@ -141,9 +145,9 @@ This project is built for a modern browser environment like **Gemini App Builder
 
 While this MVP is feature-complete for a demo, here are some exciting next steps:
 
--   **Backend Integration:** Replace the mock `api.ts` with real HTTPS calls to a production backend (e.g., a Node.js server or a workflow engine like Opus).
+-   **Backend Integration:** Replace the mock `api.ts` with real HTTPS calls to a production backend.
 -   **Real Health Provider APIs:** Integrate directly with the APIs for Strava, Apple HealthKit, etc., to sync real user data.
 -   **Push Notifications:** Implement a service worker to send real push notifications for challenge reminders and rewards.
 -   **Advanced Community Features:** Add features like friend lists, direct messaging, and team-based challenges to enhance social engagement.
 
-Enjoy exploring the FitInsured Wallet! 🎉
+Enjoy exploring the Fitcoin Wallet! 🎉
