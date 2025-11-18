@@ -169,8 +169,24 @@ const AskView: React.FC = () => {
       onRetry?: () => void;
     }
 
+    const CHAT_HISTORY_STORAGE_KEY = 'fitcoin_ask_chat_history';
+
     const [connectionState, setConnectionState] = useState<ConnectionState>('idle');
-    const [transcript, setTranscript] = useState<TranscriptItem[]>([]);
+    const [transcript, setTranscript] = useState<TranscriptItem[]>(() => {
+        try {
+            const storedHistory = localStorage.getItem(CHAT_HISTORY_STORAGE_KEY);
+            if (storedHistory) {
+                const parsedHistory = JSON.parse(storedHistory);
+                if (Array.isArray(parsedHistory) && parsedHistory.every(item => 'speaker' in item && 'text' in item)) {
+                    return parsedHistory;
+                }
+            }
+        } catch (e) {
+            console.error("Failed to load chat history from localStorage", e);
+            localStorage.removeItem(CHAT_HISTORY_STORAGE_KEY);
+        }
+        return [];
+    });
     const [currentInput, setCurrentInput] = useState('');
     const [currentOutput, setCurrentOutput] = useState('');
     const [textInput, setTextInput] = useState('');
@@ -196,7 +212,24 @@ const AskView: React.FC = () => {
         if(isModelResponding || currentOutput) {
             scrollToBottom();
         }
-    }, [isModelResponding, currentOutput, transcript]);
+    }, [isModelResponding, currentOutput]);
+
+    useEffect(() => {
+        // Only save the history when the conversation is settled (not in a voice call, not waiting for a text response).
+        if (connectionState === 'idle' && !isModelResponding) {
+            try {
+                // Filter out any empty messages that might be used as placeholders during streaming.
+                const historyToSave = transcript.filter(item => item.text && item.text.trim() !== '' && !item.isError);
+                if (historyToSave.length > 0) {
+                    localStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(historyToSave));
+                } else {
+                    localStorage.removeItem(CHAT_HISTORY_STORAGE_KEY); // If transcript is empty, clear storage.
+                }
+            } catch (e) {
+                console.error("Failed to save chat history to localStorage", e);
+            }
+        }
+    }, [transcript, connectionState, isModelResponding]);
 
 
     const stopConversation = useCallback(async () => {
@@ -375,9 +408,17 @@ When interacting with users:
         try {
             if (!chatRef.current) {
                 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+                const history = transcript
+                    .filter(item => item.text && item.text.trim() !== '' && !item.isError)
+                    .map(item => ({
+                        role: item.speaker === 'user' ? 'user' : 'model',
+                        parts: [{ text: item.text }],
+                    }));
+
                 chatRef.current = ai.chats.create({
                     model: 'gemini-2.5-flash',
                     config: { systemInstruction },
+                    history: history,
                 });
             }
 

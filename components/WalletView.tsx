@@ -1,10 +1,10 @@
 
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import type { User, WalletSummary, Challenge, JobStatus, Activity } from '../types';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import type { User, WalletSummary, Challenge, JobStatus, Activity, SavingsTier } from '../types';
 import { JobState } from '../types';
 import { simulateActivity, getJobStatus, getChallenges } from '../services/api';
-import { Loader2, Activity as ActivityIcon, BarChart3, TrendingUp, AlertCircle, Zap, Info, Footprints, Moon, Bike, Award, Repeat } from 'lucide-react';
+import { Loader2, Activity as ActivityIcon, BarChart3, TrendingUp, AlertCircle, Zap, Info, Footprints, Moon, Bike, Award, Repeat, Star } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface WalletViewProps {
@@ -22,6 +22,19 @@ const IconMap: { [key: string]: React.ElementType } = {
   Zap,
   Bike,
 };
+
+const SAVINGS_TIERS: SavingsTier[] = [
+  { name: 'Bronze', minStake: 0, apy: 5, color: 'border-amber-700' },
+  { name: 'Silver', minStake: 1000, apy: 8, color: 'border-slate-400' },
+  { name: 'Gold', minStake: 5000, apy: 12, color: 'border-yellow-500' },
+];
+
+const TIER_COLORS: { [key: string]: { bg: string, text: string, icon: string } } = {
+    'Bronze': { bg: 'bg-amber-100', text: 'text-amber-800', icon: 'text-amber-600' },
+    'Silver': { bg: 'bg-slate-200', text: 'text-slate-800', icon: 'text-slate-500' },
+    'Gold': { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: 'text-yellow-500' },
+};
+
 
 const useInterval = (callback: () => void, delay: number | null) => {
   const savedCallback = useRef(callback);
@@ -169,6 +182,11 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
   
   const COOLDOWN_STORAGE_KEY = `fitcoinSyncCooldown_${user.userId}`;
   const [cooldownTime, setCooldownTime] = useState<number | null>(null);
+
+  const currentTier = useMemo(() => {
+    if (!summary) return SAVINGS_TIERS[0];
+    return [...SAVINGS_TIERS].reverse().find(tier => summary.stakedAmount >= tier.minStake) || SAVINGS_TIERS[0];
+  }, [summary]);
   
     useEffect(() => {
     // Simulate a slight delay for connecting to the "blockchain"
@@ -294,6 +312,7 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
   
   const maticAmount = summary.balance / 10;
   const usdValue = maticPrice ? maticAmount * maticPrice : null;
+  const tierColors = TIER_COLORS[currentTier.name];
 
   return (
     <div className="space-y-6">
@@ -323,8 +342,17 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
       
       <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-6 lg:items-center">
         <header className={`relative bg-indigo-600 p-6 rounded-xl shadow-lg text-white transition-colors duration-300 ${isBalanceAnimating ? 'balance-flash-anim' : ''}`}>
-          <div className="flex justify-between items-center">
-              <p className="text-sm font-light opacity-80">Total Balance</p>
+          <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-light opacity-80">Total Balance</p>
+                <div className="flex items-center text-xs font-medium mt-1">
+                    <span className={`flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${tierColors.bg} ${tierColors.text}`}>
+                        <Star className={`w-3 h-3 mr-1 ${tierColors.icon}`} fill="currentColor"/>
+                        {currentTier.name} Tier
+                    </span>
+                    <span className="ml-2 text-white/80 font-bold">{currentTier.apy}% APY</span>
+                </div>
+              </div>
               <div className="flex items-center text-xs font-medium">
                 {isWeb3Connected ? (
                     <div className="flex items-center bg-white/20 px-2 py-1 rounded-full">
@@ -345,10 +373,10 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
           </div>
           <button 
             onClick={() => setDisplayCurrency(c => c === 'fit' ? 'matic' : 'fit')} 
-            className="w-full text-left focus:outline-none focus:ring-2 focus:ring-white/50 rounded-lg py-1 -my-1"
+            className="w-full text-left focus:outline-none focus:ring-2 focus:ring-white/50 rounded-lg py-1 -my-1 mt-1"
             aria-label="Toggle currency display"
           >
-            <h2 className="text-5xl font-extrabold my-2 flex items-baseline flex-wrap">
+            <h2 className="text-5xl font-extrabold my-1 flex items-baseline flex-wrap">
               <AnimatedBalance endValue={displayCurrency === 'fit' ? summary.balance : maticAmount} />
               <span className="text-2xl font-medium opacity-90 ml-2">{displayCurrency === 'fit' ? 'FIT' : 'MATIC'}</span>
               {usdValue != null && (
@@ -358,7 +386,7 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
               )}
             </h2>
           </button>
-           <div className="text-sm font-light opacity-80 h-5 mt-1">
+           <div className="text-sm font-light opacity-80 h-5">
              <span>Based on 1 MATIC ≈ ${maticPrice.toFixed(2)} USD</span>
           </div>
           <div className="absolute bottom-2 right-2 text-white/50 flex items-center text-xs pointer-events-none">
