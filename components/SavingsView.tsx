@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo } from 'react';
 import type { SavingsTier } from '../types';
 import { Star, TrendingUp, Loader2, CheckCircle } from 'lucide-react';
@@ -17,6 +18,12 @@ const SAVINGS_TIERS: SavingsTier[] = [
 ];
 
 const PRESET_STAKE_AMOUNTS = [25, 50, 100];
+
+const TIERS_WITH_BENEFITS: (SavingsTier & { benefits: string[] })[] = [
+  { ...SAVINGS_TIERS[0], benefits: ['Standard 5% APY', 'Access to all community challenges'] },
+  { ...SAVINGS_TIERS[1], benefits: ['Increased 8% APY', 'Access to exclusive Silver+ rewards in Marketplace'] },
+  { ...SAVINGS_TIERS[2], benefits: ['Highest 12% APY', 'Access to Gold-only challenges & rewards', 'Monthly 25 FIT bonus drop'] },
+];
 
 const SavingsView: React.FC<SavingsViewProps> = ({ balance, stakedAmount, onStake }) => {
   const [stakeInput, setStakeInput] = useState('10');
@@ -113,6 +120,34 @@ const SavingsView: React.FC<SavingsViewProps> = ({ balance, stakedAmount, onStak
           <p className="text-xs text-gray-500 mt-2">Available to Stake: {balance.toLocaleString()} FIT</p>
           {stakeSuccess && <p className="text-sm text-green-600 font-semibold text-center mt-4 animate-fade-in">Congratulations! Your FIT has been staked successfully.</p>}
         </div>
+      
+      <div className="bg-white p-5 rounded-xl shadow-md">
+        <h4 className="text-lg font-semibold mb-4">Tier Benefits</h4>
+        <div className="space-y-3">
+        {TIERS_WITH_BENEFITS.map(tier => {
+            const isCurrent = tier.name === currentTier.name;
+            return (
+            <div key={tier.name} className={`p-4 rounded-lg border-2 transition ${isCurrent ? `${tier.color} ring-4 ring-indigo-200/50` : 'border-gray-200'}`}>
+                <div className="flex justify-between items-center">
+                <h5 className={`font-bold text-lg flex items-center ${tier.color.replace('border-', 'text-')}`}>
+                    <Star className="w-5 h-5 mr-2" fill="currentColor"/> {tier.name}
+                </h5>
+                <p className="text-sm font-medium text-gray-500">Min. {tier.minStake.toLocaleString()} FIT</p>
+                </div>
+                <ul className="mt-3 text-sm text-gray-700 space-y-2">
+                {tier.benefits.map((benefit, i) => (
+                    <li key={i} className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                    <span>{benefit}</span>
+                    </li>
+                ))}
+                </ul>
+            </div>
+            )
+        })}
+        </div>
+      </div>
+
     </div>
   );
 };

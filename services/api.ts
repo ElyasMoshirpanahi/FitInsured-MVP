@@ -143,6 +143,16 @@ function createInitialWalletForUser(userId: string): WalletSummary {
 
 // --- API FUNCTIONS ---
 
+/**
+ * NOTE ON PRODUCTION ARCHITECTURE:
+ * Connecting directly to a database like MongoDB from a frontend application is a major security risk.
+ * It would expose your database credentials to anyone using the app.
+ * The correct approach is to have a backend API (e.g., using Node.js/Express) that handles database interactions.
+ * The frontend then communicates with this secure API.
+ *
+ * The code below uses localStorage for demonstration purposes. The commented-out sections
+ * show placeholder logic for how you would call a backend API.
+ */
 export const signup = async (
   displayName: string,
   email: string,
@@ -150,6 +160,34 @@ export const signup = async (
   primaryProvider: string,
   personaId: string
 ): Promise<User> => {
+  /*
+  // --- PRODUCTION LOGIC PLACEHOLDER (using a backend API) ---
+  // In a real application, you would make an API call like this.
+  // The backend would handle password hashing and saving the user to MongoDB.
+
+  try {
+    const response = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ displayName, email, password, primaryProvider, personaId }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Signup failed');
+    }
+
+    const newUser: User = await response.json();
+    // The backend would also create the initial wallet.
+    return newUser;
+
+  } catch (error) {
+    console.error('Signup API call failed:', error);
+    throw error;
+  }
+  */
+
+  // --- MOCK LOGIC (for frontend demo using localStorage) ---
   const users = loadFromStorage<User[]>(MOCK_USERS_STORAGE_KEY, []);
   if (users.some((u) => u.email === email)) {
     throw new Error('A user with this email already exists.');
@@ -176,6 +214,33 @@ export const signup = async (
 };
 
 export const login = async (email: string, password: string): Promise<User> => {
+  /*
+  // --- PRODUCTION LOGIC PLACEHOLDER (using a backend API) ---
+  // The backend would verify credentials against the MongoDB database.
+
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Invalid email or password.');
+    }
+
+    const user: User = await response.json();
+    // The backend might also return a session token (e.g., JWT) to be stored in cookies or localStorage.
+    return user;
+
+  } catch (error) {
+    console.error('Login API call failed:', error);
+    throw error;
+  }
+  */
+
+  // --- MOCK LOGIC (for frontend demo using localStorage) ---
   const users = loadFromStorage<User[]>(MOCK_USERS_STORAGE_KEY, []);
   const user = users.find((u) => u.email === email);
 

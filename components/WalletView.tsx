@@ -5,7 +5,7 @@ import type { User, WalletSummary, Challenge, JobStatus, Activity } from '../typ
 import { JobState } from '../types';
 import { simulateActivity, getJobStatus, getChallenges } from '../services/api';
 import { Loader2, Activity as ActivityIcon, BarChart3, TrendingUp, AlertCircle, Zap, Info, Footprints, Moon, Bike, Award, Repeat } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface WalletViewProps {
   user: User;
@@ -458,13 +458,25 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
         <h3 className="text-lg font-bold text-gray-800 mb-2 flex items-center"><TrendingUp className="w-5 h-5 mr-2 text-indigo-600" />Last 7 Days</h3>
         <div className="h-40">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="#6b7280" />
-              <YAxis tick={{ fontSize: 12 }} stroke="#6b7280" />
-              <Tooltip cursor={{fill: 'rgba(239, 246, 255, 0.5)'}} contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }} />
-              <Bar dataKey="fitcoin" fill="#4f46e5" radius={[4, 4, 0, 0]} />
-            </BarChart>
+            <LineChart data={chartData} margin={{ top: 20, right: 20, left: -20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="#6b7280" axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 12 }} stroke="#6b7280" axisLine={false} tickLine={false} />
+              <Tooltip 
+                  cursor={{ stroke: '#c7d2fe', strokeWidth: 2 }} 
+                  contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '0.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }} 
+                  labelStyle={{ fontWeight: 'bold', color: '#1f2937' }}
+                  itemStyle={{ color: '#4f46e5', fontWeight: 'bold' }}
+              />
+              <Line 
+                  type="monotone" 
+                  dataKey="fitcoin" 
+                  stroke="#4f46e5" 
+                  strokeWidth={3} 
+                  dot={{ r: 5, fill: '#4f46e5', stroke: 'white', strokeWidth: 2 }} 
+                  activeDot={{ r: 7, fill: '#4f46e5', stroke: 'white', strokeWidth: 2 }} 
+              />
+            </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
