@@ -1,6 +1,3 @@
-
-
-// Fix: Corrected syntax error in React import.
 import React, { useState } from 'react';
 import type { MarketplaceItem } from '../types';
 import { Store, Shield, Watch, Apple, CheckCircle, Loader2, Dumbbell, GlassWater, Flower, Cookie, Sparkles } from 'lucide-react';
@@ -44,12 +41,12 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ balance, onRedeem }) 
   return (
     <div className="space-y-6">
       {showConfetti && <Confetti onComplete={() => setShowConfetti(false)} />}
-      <div className="bg-white p-5 rounded-xl shadow-lg border-t-4 border-orange-500">
-        <h3 className="text-xl font-bold text-gray-800 mb-2 flex items-center">
-          <Store className="w-6 h-6 mr-2 text-orange-600" />
+      <div className="bg-[#161b22] p-5 rounded-xl shadow-lg border-t-4 border-orange-500">
+        <h3 className="text-xl font-bold text-white mb-2 flex items-center">
+          <Store className="w-6 h-6 mr-2 text-orange-500" />
           Provider Rewards Hub
         </h3>
-        <p className="text-sm text-gray-500">Use your Fitcoin to claim exclusive rewards from our partners.</p>
+        <p className="text-sm text-gray-400">Use your Fitcoin to claim exclusive rewards from our partners.</p>
       </div>
 
       <div className="space-y-4">
@@ -60,27 +57,27 @@ const MarketplaceView: React.FC<MarketplaceViewProps> = ({ balance, onRedeem }) 
           const isRedeemed = redeemedId === item.id;
 
           return (
-            <div key={item.id} className="bg-white p-4 rounded-xl shadow-md flex flex-col">
+            <div key={item.id} className="bg-[#161b22] p-4 rounded-xl shadow-md flex flex-col border border-gray-800 transition-all hover:border-gray-600">
               <div className="flex items-start justify-between">
                 <div className="flex items-center">
-                  <div className="p-3 bg-orange-100 rounded-full"><Icon className="w-6 h-6 text-orange-600" /></div>
+                  <div className="p-3 bg-orange-900/20 rounded-full"><Icon className="w-6 h-6 text-orange-500" /></div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-indigo-600">{item.category}</p>
-                    <h4 className="text-lg font-extrabold text-gray-800">{item.name}</h4>
+                    <p className="text-sm font-medium text-[#2e8dee]">{item.category}</p>
+                    <h4 className="text-lg font-extrabold text-white">{item.name}</h4>
                   </div>
                 </div>
-                <p className={`font-extrabold text-xl ${canAfford ? 'text-orange-600' : 'text-gray-400'}`}>
+                <p className={`font-extrabold text-xl ${canAfford ? 'text-orange-400' : 'text-gray-600'}`}>
                   {item.cost.toLocaleString()} FIT
                 </p>
               </div>
-              <div className="mt-3 pt-3 border-t border-dashed border-gray-200 flex justify-between items-center">
-                <p className="text-sm text-gray-700 pr-4">{item.description}</p>
+              <div className="mt-3 pt-3 border-t border-dashed border-gray-700 flex justify-between items-center">
+                <p className="text-sm text-gray-400 pr-4">{item.description}</p>
                  <button
                     onClick={() => handleRedeem(item)}
                     disabled={!canAfford || isRedeeming || isRedeemed}
                     className={`w-28 text-sm font-bold px-4 py-2 rounded-lg transition-all duration-300 transform flex-shrink-0 flex justify-center items-center
-                      ${isRedeemed ? 'bg-green-500 text-white scale-105' : 
-                      (canAfford ? 'bg-orange-500 text-white shadow-md hover:bg-orange-600 hover:scale-105' : 'bg-gray-200 text-gray-500 cursor-not-allowed')}
+                      ${isRedeemed ? 'bg-green-600 text-white scale-105' : 
+                      (canAfford ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20 hover:bg-orange-500 hover:scale-105' : 'bg-gray-800 text-gray-600 cursor-not-allowed')}
                     `}
                 >
                     {isRedeeming ? <Loader2 className="w-5 h-5 animate-spin"/> : isRedeemed ? <CheckCircle className="w-5 h-5" /> : (canAfford ? 'Redeem' : 'Locked')}

@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import type { User, WalletSummary, Challenge, JobStatus, Activity, SavingsTier } from '../types';
 import { JobState } from '../types';
@@ -30,9 +28,9 @@ const SAVINGS_TIERS: SavingsTier[] = [
 ];
 
 const TIER_COLORS: { [key: string]: { bg: string, text: string, icon: string } } = {
-    'Bronze': { bg: 'bg-amber-100', text: 'text-amber-800', icon: 'text-amber-600' },
-    'Silver': { bg: 'bg-slate-200', text: 'text-slate-800', icon: 'text-slate-500' },
-    'Gold': { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: 'text-yellow-500' },
+    'Bronze': { bg: 'bg-amber-900/30', text: 'text-amber-400', icon: 'text-amber-500' },
+    'Silver': { bg: 'bg-slate-700/30', text: 'text-slate-300', icon: 'text-slate-400' },
+    'Gold': { bg: 'bg-yellow-900/30', text: 'text-yellow-400', icon: 'text-yellow-500' },
 };
 
 
@@ -118,16 +116,16 @@ const ReportModal: React.FC<{
             case 'reporting':
                 return (
                     <>
-                        <h3 className="text-lg font-bold text-gray-800 text-center mb-2">Syncing Activity...</h3>
-                        <p className="text-sm text-gray-500 text-center mb-4">Found {jobResult?.generatedActivities?.length || 0} new activities.</p>
-                        <div className="space-y-2 max-h-40 overflow-y-auto p-1">
+                        <h3 className="text-lg font-bold text-white text-center mb-2">Syncing Activity...</h3>
+                        <p className="text-sm text-gray-400 text-center mb-4">Found {jobResult?.generatedActivities?.length || 0} new activities.</p>
+                        <div className="space-y-2 max-h-40 overflow-y-auto p-1 custom-scrollbar">
                             {jobResult?.generatedActivities?.map((act, i) => {
                                 const Icon = IconMap[act.icon] || Zap;
                                 return (
-                                <div key={i} className="flex items-center bg-gray-100 p-2 rounded-md animate-fade-in" style={{animationDelay: `${i * 150}ms`, opacity: 0, animationFillMode: 'forwards'}}>
-                                    <Icon className="w-5 h-5 text-indigo-500 mr-3"/>
-                                    <span className="font-semibold text-gray-700">{act.title}:</span>
-                                    <span className="ml-auto text-gray-600">{act.metric}</span>
+                                <div key={i} className="flex items-center bg-[#0d0f12] p-2 rounded-md animate-fade-in border border-gray-700" style={{animationDelay: `${i * 150}ms`, opacity: 0, animationFillMode: 'forwards'}}>
+                                    <Icon className="w-5 h-5 text-[#2e8dee] mr-3"/>
+                                    <span className="font-semibold text-gray-200">{act.title}:</span>
+                                    <span className="ml-auto text-gray-400">{act.metric}</span>
                                 </div>
                                 )
                             })}
@@ -137,27 +135,27 @@ const ReportModal: React.FC<{
             case 'calculating':
                  return (
                     <div className="flex flex-col items-center justify-center h-48 animate-fade-in">
-                         <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-                         <p className="text-lg font-bold text-gray-800 mt-4">Calculating Fitcoins...</p>
+                         <Loader2 className="w-10 h-10 text-[#2e8dee] animate-spin" />
+                         <p className="text-lg font-bold text-white mt-4">Calculating Fitcoins...</p>
                     </div>
                  );
             case 'results':
                 return (
                     <div className="flex flex-col items-center justify-center h-48 text-center animate-fade-in">
-                        <Award className="w-12 h-12 text-green-500" />
-                        <h3 className="text-2xl font-extrabold text-gray-800 mt-3">Congratulations!</h3>
-                        <p className="text-gray-600 mt-1">You've earned</p>
-                        <p className="text-4xl font-bold text-green-600 my-2 animate-pop-in">{(jobResult?.fitcoinDelta ?? 0).toFixed(2)} FIT</p>
-                        <p className="text-sm text-gray-500 mt-3">Great work! Come back in 1 hour to sync again and earn more.</p>
-                        <button onClick={onClose} className="mt-4 bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg text-sm">Done</button>
+                        <Award className="w-12 h-12 text-[#39b5ff]" />
+                        <h3 className="text-2xl font-extrabold text-white mt-3">Congratulations!</h3>
+                        <p className="text-gray-400 mt-1">You've earned</p>
+                        <p className="text-4xl font-bold text-[#39b5ff] my-2 animate-pop-in">{(jobResult?.fitcoinDelta ?? 0).toFixed(2)} FIT</p>
+                        <p className="text-sm text-gray-500 mt-3">Great work! Come back in 1 hour to sync again.</p>
+                        <button onClick={onClose} className="mt-4 bg-[#2e8dee] hover:bg-[#39b5ff] text-white font-semibold py-2 px-6 rounded-lg text-sm transition-colors">Done</button>
                     </div>
                 );
         }
     }
 
     return (
-        <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50 p-4 animate-fade-in">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50 p-4 animate-fade-in">
+            <div className="bg-[#161b22] border border-gray-700 rounded-xl shadow-2xl w-full max-w-sm p-6 text-white">
                 {renderContent()}
             </div>
         </div>
@@ -251,7 +249,6 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
       setPollingDelay(null);
       setJobId(null);
       setIsSimulating(false);
-      // You could add an error toast here
     }
   }, [jobId]);
 
@@ -265,7 +262,6 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
       setPollingDelay(1500); // Start polling
     } catch (err) {
       setIsSimulating(false);
-       // You could add an error toast here
     }
   };
   
@@ -296,15 +292,15 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
   })) || [];
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-full"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>;
+    return <div className="flex justify-center items-center h-full"><Loader2 className="w-8 h-8 animate-spin text-[#2e8dee]" /></div>;
   }
 
   if (error) {
-    return <div className="text-center text-red-500 p-4"><AlertCircle className="mx-auto mb-2" />{error}</div>;
+    return <div className="text-center text-red-400 p-4"><AlertCircle className="mx-auto mb-2" />{error}</div>;
   }
 
   if (!summary) {
-    return <div className="text-center text-gray-500 p-4">No wallet summary available.</div>;
+    return <div className="text-center text-gray-400 p-4">No wallet summary available.</div>;
   }
   
   const weeklyTotal = summary.last7Days.reduce((sum, day) => sum + day.fitcoinEarned, 0);
@@ -331,9 +327,9 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
         .animate-pop-in { animation: pop-in 0.5s ease-out forwards; }
 
         @keyframes balance-flash {
-            0% { background-color: #4f46e5; } /* bg-indigo-600 */
-            50% { background-color: #6d63f5; } /* a lighter indigo */
-            100% { background-color: #4f46e5; }
+            0% { background-color: #2e8dee; }
+            50% { background-color: #39b5ff; }
+            100% { background-color: #2e8dee; }
         }
         .balance-flash-anim {
             animation: balance-flash 1.5s ease-out;
@@ -341,12 +337,12 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
       `}</style>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-6 lg:items-center">
-        <header className={`relative bg-indigo-600 p-6 rounded-xl shadow-lg text-white transition-colors duration-300 ${isBalanceAnimating ? 'balance-flash-anim' : ''}`}>
+        <header className={`relative bg-gradient-to-br from-[#2e8dee] to-blue-700 p-6 rounded-xl shadow-lg shadow-[#2e8dee]/20 text-white transition-colors duration-300 ${isBalanceAnimating ? 'balance-flash-anim' : ''}`}>
           <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm font-light opacity-80">Total Balance</p>
                 <div className="flex items-center text-xs font-medium mt-1">
-                    <span className={`flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${tierColors.bg} ${tierColors.text}`}>
+                    <span className={`flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border border-white/20 ${tierColors.bg} ${tierColors.text}`}>
                         <Star className={`w-3 h-3 mr-1 ${tierColors.icon}`} fill="currentColor"/>
                         {currentTier.name} Tier
                     </span>
@@ -355,7 +351,7 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
               </div>
               <div className="flex items-center text-xs font-medium">
                 {isWeb3Connected ? (
-                    <div className="flex items-center bg-white/20 px-2 py-1 rounded-full">
+                    <div className="flex items-center bg-black/20 px-2 py-1 rounded-full border border-white/10">
                         <span className="relative flex h-2 w-2 mr-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
@@ -364,7 +360,7 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
                         <span className="ml-1.5 text-white">Polygon Mainnet</span>
                     </div>
                 ) : (
-                    <div className="flex items-center bg-white/20 px-2 py-1 rounded-full">
+                    <div className="flex items-center bg-black/20 px-2 py-1 rounded-full">
                         <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
                         <span>Connecting...</span>
                     </div>
@@ -399,10 +395,10 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
           <button 
             onClick={handleSyncData} 
             disabled={isSimulating || isOnCooldown} 
-            className={`w-full font-bold py-4 px-6 rounded-lg flex items-center justify-center shadow-lg transform transition disabled:scale-100 lg:py-6
+            className={`w-full font-bold py-4 px-6 rounded-lg flex items-center justify-center shadow-lg transform transition disabled:scale-100 lg:py-6 border
               ${isOnCooldown 
-                ? 'bg-gray-400 text-white cursor-not-allowed' 
-                : 'bg-green-500 text-white hover:scale-105 hover:bg-green-600'
+                ? 'bg-[#161b22] border-gray-700 text-gray-500 cursor-not-allowed' 
+                : 'bg-gradient-to-r from-green-500 to-emerald-600 border-green-400 text-white hover:scale-105 hover:shadow-green-500/20'
               }`
             }
           >
@@ -426,83 +422,83 @@ const WalletView: React.FC<WalletViewProps> = ({ user, summary, isLoading, error
         </div>
       </div>
       
-      <div className="bg-white p-4 rounded-xl shadow-md">
-        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center"><ActivityIcon className="w-5 h-5 mr-2 text-indigo-600" />Today's Activities</h3>
+      <div className="bg-[#161b22] p-4 rounded-xl shadow-md border border-gray-800">
+        <h3 className="text-lg font-bold text-white mb-4 flex items-center"><ActivityIcon className="w-5 h-5 mr-2 text-[#2e8dee]" />Today's Activities</h3>
         {summary.today.activities.length > 0 ? (
           <div className="space-y-3">
             {summary.today.activities.map((activity, index) => {
               const Icon = IconMap[activity.icon] || BarChart3;
               const iconColors: { [key: string]: string } = {
-                Footprints: 'bg-pink-100 text-pink-600',
-                Zap: 'bg-yellow-100 text-yellow-600',
-                Bike: 'bg-green-100 text-green-600',
-                Moon: 'bg-blue-100 text-blue-600',
+                Footprints: 'bg-pink-500/10 text-pink-400',
+                Zap: 'bg-yellow-500/10 text-yellow-400',
+                Bike: 'bg-green-500/10 text-green-400',
+                Moon: 'bg-blue-500/10 text-blue-400',
               };
-              const colorClasses = iconColors[activity.icon] || 'bg-gray-100 text-gray-600';
+              const colorClasses = iconColors[activity.icon] || 'bg-gray-700/50 text-gray-400';
 
               return (
-                <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                <div key={index} className="flex items-center justify-between bg-[#0d0f12] p-3 rounded-lg border border-gray-800">
                   <div className="flex items-center">
                     <div className={`p-2 rounded-full ${colorClasses}`}>
                       <Icon className="w-5 h-5" />
                     </div>
                     <div className="ml-3">
-                      <p className="font-semibold text-gray-800">{activity.title}</p>
+                      <p className="font-semibold text-gray-200">{activity.title}</p>
                       <p className="text-xs text-gray-500">{activity.metric}</p>
                     </div>
                   </div>
-                  <p className="font-bold text-green-600">+ {(activity.fitcoin ?? 0).toFixed(2)} FIT</p>
+                  <p className="font-bold text-[#39b5ff]">+ {(activity.fitcoin ?? 0).toFixed(2)} FIT</p>
                 </div>
               );
             })}
           </div>
         ) : (
           <div className="text-center py-4">
-             <p className="text-sm text-gray-600 mb-4">No activities logged yet today. Join a challenge to get started!</p>
+             <p className="text-sm text-gray-400 mb-4">No activities logged yet today. Join a challenge to get started!</p>
              <div className="space-y-3">
                 {suggestedChallenges.map(c => {
                     const Icon = IconMap[c.icon] || Zap;
                     return (
-                        <div key={c.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg text-left">
+                        <div key={c.id} className="flex items-center justify-between bg-[#0d0f12] p-3 rounded-lg text-left border border-gray-800">
                             <div className="flex items-center">
-                                <Icon className="w-5 h-5 text-indigo-500 mr-3" />
+                                <Icon className="w-5 h-5 text-[#2e8dee] mr-3" />
                                 <div>
-                                    <p className="font-semibold text-gray-800">{c.name}</p>
-                                    <p className="text-xs text-green-600 font-medium">Reward: {c.reward} FIT</p>
+                                    <p className="font-semibold text-gray-200">{c.name}</p>
+                                    <p className="text-xs text-[#39b5ff] font-medium">Reward: {c.reward} FIT</p>
                                 </div>
                             </div>
                         </div>
                     )
                 })}
              </div>
-              <button onClick={navigateToCommunity} className="mt-4 bg-indigo-100 text-indigo-700 font-semibold py-2 px-4 rounded-lg text-sm">
+              <button onClick={navigateToCommunity} className="mt-4 bg-[#161b22] border border-[#2e8dee] text-[#2e8dee] hover:bg-[#2e8dee] hover:text-white font-semibold py-2 px-4 rounded-lg text-sm transition-all">
                 View All Challenges
               </button>
           </div>
         )}
       </div>
 
-       <div className="bg-white p-4 rounded-xl shadow-md">
-        <h3 className="text-lg font-bold text-gray-800 mb-2 flex items-center"><TrendingUp className="w-5 h-5 mr-2 text-indigo-600" />Last 7 Days</h3>
+       <div className="bg-[#161b22] p-4 rounded-xl shadow-md border border-gray-800">
+        <h3 className="text-lg font-bold text-white mb-2 flex items-center"><TrendingUp className="w-5 h-5 mr-2 text-[#2e8dee]" />Last 7 Days</h3>
         <div className="h-40">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 20, right: 20, left: -20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-              <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="#6b7280" axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12 }} stroke="#6b7280" axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2e353b" />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#6b7280' }} stroke="#4b5563" axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} stroke="#4b5563" axisLine={false} tickLine={false} />
               <Tooltip 
-                  cursor={{ stroke: '#c7d2fe', strokeWidth: 2 }} 
-                  contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '0.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }} 
-                  labelStyle={{ fontWeight: 'bold', color: '#1f2937' }}
-                  itemStyle={{ color: '#4f46e5', fontWeight: 'bold' }}
+                  cursor={{ stroke: '#2e8dee', strokeWidth: 1 }} 
+                  contentStyle={{ backgroundColor: '#161b22', border: '1px solid #2e353b', borderRadius: '0.5rem', color: '#fff' }} 
+                  labelStyle={{ fontWeight: 'bold', color: '#9ca3af' }}
+                  itemStyle={{ color: '#39b5ff', fontWeight: 'bold' }}
               />
               <Line 
                   type="monotone" 
                   dataKey="fitcoin" 
-                  stroke="#4f46e5" 
+                  stroke="#2e8dee" 
                   strokeWidth={3} 
-                  dot={{ r: 5, fill: '#4f46e5', stroke: 'white', strokeWidth: 2 }} 
-                  activeDot={{ r: 7, fill: '#4f46e5', stroke: 'white', strokeWidth: 2 }} 
+                  dot={{ r: 4, fill: '#2e8dee', stroke: '#161b22', strokeWidth: 2 }} 
+                  activeDot={{ r: 6, fill: '#39b5ff', stroke: 'white', strokeWidth: 2 }} 
               />
             </LineChart>
           </ResponsiveContainer>

@@ -17,8 +17,24 @@
   }
 }
 </script>
+<style>
+  /* Custom scrollbar for dark theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0d0f12; 
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2e353b; 
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #39b5ff; 
+  }
+</style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-[#0d0f12] text-gray-100">
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>

@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo } from 'react';
 import type { SavingsTier } from '../types';
 import { Star, TrendingUp, Loader2, CheckCircle } from 'lucide-react';
@@ -38,27 +36,26 @@ const TierProgressVisual: React.FC<{ stakedAmount: number, tiers: SavingsTier[] 
 
     return (
         <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-500">Your progress to the next tier:</p>
+            <p className="text-sm font-medium text-gray-400">Your progress to the next tier:</p>
             <div className="flex items-center w-full space-x-2">
                 {tiers.slice(0, -1).map((tier, index) => {
                     const nextTier = tiers[index + 1];
                     const progress = getProgress(index);
                     const isActive = stakedAmount >= tier.minStake && stakedAmount < nextTier.minStake;
-                    const isComplete = stakedAmount >= nextTier.minStake;
-
+                    
                     return (
                         <React.Fragment key={tier.name}>
-                             <div className={`text-center flex-shrink-0 ${stakedAmount >= tier.minStake ? 'font-bold text-indigo-600' : 'text-gray-400'}`}>
-                                <Star className={`w-6 h-6 mx-auto ${stakedAmount >= tier.minStake ? tier.color.replace('border-','text-') : 'text-gray-300'}`} fill="currentColor" />
+                             <div className={`text-center flex-shrink-0 ${stakedAmount >= tier.minStake ? 'font-bold text-[#2e8dee]' : 'text-gray-600'}`}>
+                                <Star className={`w-6 h-6 mx-auto ${stakedAmount >= tier.minStake ? tier.color.replace('border-','text-') : 'text-gray-700'}`} fill="currentColor" />
                                 <span className="text-xs">{tier.name}</span>
                             </div>
                             {index < tiers.length - 2 && (
                                 <div className="flex-grow pt-2.5">
-                                    <div className="w-full bg-gray-200 rounded-full h-1.5 relative">
-                                        <div className="bg-indigo-500 h-1.5 rounded-full" style={{ width: `${progress}%` }}></div>
-                                        {isActive && <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-indigo-600 rounded-full" style={{ left: `${progress}%` }}></div>}
+                                    <div className="w-full bg-gray-800 rounded-full h-1.5 relative">
+                                        <div className="bg-[#2e8dee] h-1.5 rounded-full" style={{ width: `${progress}%` }}></div>
+                                        {isActive && <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-[#2e8dee] rounded-full" style={{ left: `${progress}%` }}></div>}
                                     </div>
-                                    <div className="flex justify-between text-xs text-gray-400 mt-1">
+                                    <div className="flex justify-between text-xs text-gray-500 mt-1">
                                         <span>{tier.minStake}</span>
                                         <span>{nextTier.minStake}</span>
                                     </div>
@@ -67,8 +64,8 @@ const TierProgressVisual: React.FC<{ stakedAmount: number, tiers: SavingsTier[] 
                         </React.Fragment>
                     );
                 })}
-                <div className={`text-center flex-shrink-0 ${stakedAmount >= tiers[tiers.length - 1].minStake ? 'font-bold text-indigo-600' : 'text-gray-400'}`}>
-                    <Star className={`w-6 h-6 mx-auto ${stakedAmount >= tiers[tiers.length - 1].minStake ? tiers[tiers.length-1].color.replace('border-','text-') : 'text-gray-300'}`} fill="currentColor" />
+                <div className={`text-center flex-shrink-0 ${stakedAmount >= tiers[tiers.length - 1].minStake ? 'font-bold text-[#2e8dee]' : 'text-gray-600'}`}>
+                    <Star className={`w-6 h-6 mx-auto ${stakedAmount >= tiers[tiers.length - 1].minStake ? tiers[tiers.length-1].color.replace('border-','text-') : 'text-gray-700'}`} fill="currentColor" />
                     <span className="text-xs">{tiers[tiers.length-1].name}</span>
                 </div>
             </div>
@@ -114,34 +111,34 @@ const SavingsView: React.FC<SavingsViewProps> = ({ balance, stakedAmount, onStak
   return (
     <div className="space-y-6">
       {showConfetti && <Confetti onComplete={() => setShowConfetti(false)} />}
-      <div className="bg-white p-5 rounded-xl shadow-lg border-t-4 border-green-500">
-        <h3 className="text-xl font-bold text-gray-800 mb-2 flex items-center">
-          <TrendingUp className="w-6 h-6 mr-2 text-green-600" />
+      <div className="bg-[#161b22] p-5 rounded-xl shadow-lg border-t-4 border-green-500">
+        <h3 className="text-xl font-bold text-white mb-2 flex items-center">
+          <TrendingUp className="w-6 h-6 mr-2 text-green-500" />
           FIT Savings & Tiers
         </h3>
-        <p className="text-sm text-gray-500">Stake your Fitcoin to earn an annual yield and unlock benefits.</p>
+        <p className="text-sm text-gray-400">Stake your Fitcoin to earn an annual yield and unlock benefits.</p>
       </div>
 
-      <div className="p-4 rounded-xl shadow-md bg-white space-y-4">
+      <div className="p-4 rounded-xl shadow-md bg-[#161b22] border border-gray-800 space-y-4">
           <div className={`border-l-4 ${currentTier.color} pl-4`}>
-            <p className="text-sm font-medium text-gray-600">Current Tier</p>
+            <p className="text-sm font-medium text-gray-400">Current Tier</p>
             <div className="flex justify-between items-center mt-1">
-                <span className="text-2xl font-bold text-gray-800 flex items-center">
+                <span className="text-2xl font-bold text-white flex items-center">
                 <Star className={`w-5 h-5 mr-1.5 ${currentTier.color.replace('border-', 'text-')}`} fill="currentColor" />
                 {currentTier.name}
                 </span>
-                <p className="text-lg">APY: <span className="font-bold text-indigo-600">{currentTier.apy}%</span></p>
+                <p className="text-lg text-gray-300">APY: <span className="font-bold text-[#39b5ff]">{currentTier.apy}%</span></p>
             </div>
-            <p className="text-sm text-gray-600 mt-1">Total Staked: <span className="font-bold">{stakedAmount.toLocaleString()} FIT</span></p>
+            <p className="text-sm text-gray-400 mt-1">Total Staked: <span className="font-bold text-white">{stakedAmount.toLocaleString()} FIT</span></p>
           </div>
-          <div className="pt-4 border-t border-gray-100">
+          <div className="pt-4 border-t border-gray-800">
              <TierProgressVisual stakedAmount={stakedAmount} tiers={SAVINGS_TIERS} />
           </div>
       </div>
 
-       <div className="bg-white p-5 rounded-xl shadow-md">
-          <h4 className="text-lg font-semibold mb-3">Staking Programs</h4>
-          <p className="text-sm text-gray-500 mb-4">Choose a preset amount or enter a custom value to stake. Minimum 10 FIT.</p>
+       <div className="bg-[#161b22] p-5 rounded-xl shadow-md border border-gray-800">
+          <h4 className="text-lg font-semibold mb-3 text-white">Staking Programs</h4>
+          <p className="text-sm text-gray-400 mb-4">Choose a preset amount or enter a custom value to stake. Minimum 10 FIT.</p>
           
           <div className="flex space-x-2 mb-4">
               {PRESET_STAKE_AMOUNTS.map(amount => (
@@ -149,7 +146,7 @@ const SavingsView: React.FC<SavingsViewProps> = ({ balance, stakedAmount, onStak
                     key={amount}
                     onClick={() => handleStake(amount)}
                     disabled={isStaking || balance < amount}
-                    className="flex-1 px-4 py-3 font-bold rounded-lg transition bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 font-bold rounded-lg transition bg-[#0d0f12] text-[#2e8dee] border border-[#2e8dee]/30 hover:bg-[#2e8dee] hover:text-white disabled:bg-gray-800 disabled:text-gray-600 disabled:border-transparent disabled:cursor-not-allowed"
                   >
                       Stake {amount} FIT
                   </button>
@@ -163,35 +160,35 @@ const SavingsView: React.FC<SavingsViewProps> = ({ balance, stakedAmount, onStak
               onChange={(e) => setStakeInput(e.target.value)}
               min="10"
               max={balance}
-              className="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+              className="flex-grow p-3 bg-[#0d0f12] border border-gray-700 text-white rounded-lg focus:ring-1 focus:ring-[#2e8dee] focus:border-[#2e8dee] outline-none"
               placeholder="Min 10 FIT"
             />
             <button
               onClick={() => handleStake(stakeAmount)}
               disabled={isStaking || isCustomStakeInvalid}
-              className="w-32 px-6 py-3 font-bold rounded-lg transition bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed flex justify-center items-center"
+              className="w-32 px-6 py-3 font-bold rounded-lg transition bg-[#2e8dee] text-white hover:bg-[#39b5ff] disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed flex justify-center items-center shadow-lg shadow-[#2e8dee]/20"
             >
               {isStaking ? <Loader2 className="w-5 h-5 animate-spin" /> : stakeSuccess ? <CheckCircle className="w-5 h-5" /> : 'Stake'}
             </button>
           </div>
           <p className="text-xs text-gray-500 mt-2">Available to Stake: {balance.toLocaleString()} FIT</p>
-          {stakeSuccess && <p className="text-sm text-green-600 font-semibold text-center mt-4 animate-fade-in">Congratulations! Your FIT has been staked successfully.</p>}
+          {stakeSuccess && <p className="text-sm text-green-400 font-semibold text-center mt-4 animate-fade-in">Congratulations! Your FIT has been staked successfully.</p>}
         </div>
       
-      <div className="bg-white p-5 rounded-xl shadow-md">
-        <h4 className="text-lg font-semibold mb-4">Tier Benefits</h4>
+      <div className="bg-[#161b22] p-5 rounded-xl shadow-md border border-gray-800">
+        <h4 className="text-lg font-semibold mb-4 text-white">Tier Benefits</h4>
         <div className="space-y-3">
         {TIERS_WITH_BENEFITS.map(tier => {
             const isCurrent = tier.name === currentTier.name;
             return (
-            <div key={tier.name} className={`p-4 rounded-lg border-2 transition ${isCurrent ? `${tier.color} ring-4 ring-indigo-200/50` : 'border-gray-200'}`}>
+            <div key={tier.name} className={`p-4 rounded-lg border-2 transition ${isCurrent ? `${tier.color} bg-[#2e8dee]/5` : 'border-gray-800 bg-[#0d0f12]'}`}>
                 <div className="flex justify-between items-center">
                 <h5 className={`font-bold text-lg flex items-center ${tier.color.replace('border-', 'text-')}`}>
                     <Star className="w-5 h-5 mr-2" fill="currentColor"/> {tier.name}
                 </h5>
                 <p className="text-sm font-medium text-gray-500">Min. {tier.minStake.toLocaleString()} FIT</p>
                 </div>
-                <ul className="mt-3 text-sm text-gray-700 space-y-2">
+                <ul className="mt-3 text-sm text-gray-300 space-y-2">
                 {tier.benefits.map((benefit, i) => (
                     <li key={i} className="flex items-center">
                     <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />

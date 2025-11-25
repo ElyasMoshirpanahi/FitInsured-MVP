@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import type { User, WalletSummary } from '../types';
 import { Wallet, Users, LogOut, User as UserIcon, Store, TrendingUp, Bot } from 'lucide-react';
@@ -18,7 +17,7 @@ interface NavItemProps {
 }
 
 const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, isActive, onClick }) => {
-  const activeClasses = isActive ? "text-indigo-600" : "text-gray-500 hover:text-gray-700";
+  const activeClasses = isActive ? "text-[#2e8dee]" : "text-gray-500 hover:text-gray-300";
   return (
     <button onClick={onClick} className={`flex flex-col items-center p-2 transition-colors duration-200 w-1/5 ${activeClasses}`}>
       <Icon className="w-6 h-6" strokeWidth={isActive ? 2.5 : 1.5} />
@@ -36,10 +35,12 @@ const NAV_ITEMS = [
 ];
 
 const DesktopSidebar: React.FC<{ user: User; currentView: string; setCurrentView: (view: string) => void; onLogout: () => void; }> = ({ user, currentView, setCurrentView, onLogout }) => (
-    <nav className="hidden lg:flex flex-col w-64 border-r border-gray-200 p-4 space-y-4 flex-shrink-0 bg-white">
+    <nav className="hidden lg:flex flex-col w-64 border-r border-gray-800 p-4 space-y-4 flex-shrink-0 bg-[#161b22]">
         <div className="p-4 text-center">
-            <UserIcon className="w-10 h-10 text-indigo-600 mx-auto mb-2" />
-            <h1 className="text-lg font-bold text-gray-800 truncate" title={user.displayName}>{user.displayName}</h1>
+            <div className="w-16 h-16 bg-[#0d0f12] rounded-full mx-auto mb-3 flex items-center justify-center border border-gray-700">
+                 <UserIcon className="w-8 h-8 text-[#2e8dee]" />
+            </div>
+            <h1 className="text-lg font-bold text-white truncate" title={user.displayName}>{user.displayName}</h1>
             <p className="text-sm text-gray-500">Fitcoin Wallet</p>
         </div>
         <div className="flex-grow">
@@ -47,8 +48,10 @@ const DesktopSidebar: React.FC<{ user: User; currentView: string; setCurrentView
                 <button
                     key={item.id}
                     onClick={() => setCurrentView(item.id)}
-                    className={`w-full flex items-center p-3 my-1 rounded-lg transition-colors duration-200 ${
-                        currentView === item.id ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'
+                    className={`w-full flex items-center p-3 my-1 rounded-lg transition-all duration-200 border border-transparent ${
+                        currentView === item.id 
+                        ? 'bg-[#2e8dee]/10 text-[#39b5ff] border-[#2e8dee]/30' 
+                        : 'text-gray-400 hover:bg-[#0d0f12] hover:text-white'
                     }`}
                 >
                     <item.icon className="w-5 h-5 mr-3" strokeWidth={currentView === item.id ? 2.5 : 2} />
@@ -56,8 +59,8 @@ const DesktopSidebar: React.FC<{ user: User; currentView: string; setCurrentView
                 </button>
             ))}
         </div>
-        <div className="border-t border-gray-200 pt-4">
-             <button onClick={onLogout} className="w-full flex items-center p-3 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors duration-200">
+        <div className="border-t border-gray-800 pt-4">
+             <button onClick={onLogout} className="w-full flex items-center p-3 rounded-lg text-gray-400 hover:bg-[#0d0f12] hover:text-red-400 transition-colors duration-200">
                 <LogOut className="w-5 h-5 mr-3" />
                 <span className="font-semibold text-sm">Logout</span>
             </button>
@@ -66,7 +69,7 @@ const DesktopSidebar: React.FC<{ user: User; currentView: string; setCurrentView
 );
 
 const MobileNavBar: React.FC<{ currentView: string; setCurrentView: (view: string) => void; }> = ({ currentView, setCurrentView }) => (
-    <nav className="sticky bottom-0 z-10 flex-shrink-0 flex justify-around items-center h-16 bg-white border-t border-gray-200 lg:hidden">
+    <nav className="sticky bottom-0 z-10 flex-shrink-0 flex justify-around items-center h-16 bg-[#161b22] border-t border-gray-800 lg:hidden">
         {NAV_ITEMS.map(item => <NavItem key={item.id} icon={item.icon} label={item.label} isActive={currentView === item.id} onClick={() => setCurrentView(item.id)} />)}
     </nav>
 );
@@ -144,7 +147,8 @@ const MainApp: React.FC<MainAppProps> = ({ user, onLogout }) => {
       case 'community':
         return <CommunityView user={user} />;
       case 'ask':
-        return <AskView />;
+        // Pass user and summary to AskView for personalization
+        return <AskView user={user} summary={summary} />;
       case 'wallet':
       default:
         return <WalletView user={user} summary={summary} isLoading={isLoading} error={error} onRefresh={fetchSummary} navigateToCommunity={() => setCurrentView('community')} />;
@@ -154,7 +158,7 @@ const MainApp: React.FC<MainAppProps> = ({ user, onLogout }) => {
   const mainContentPadding = currentView === 'ask' ? '' : 'p-4';
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-50 p-0 sm:p-4 font-sans">
+    <div className="flex justify-center items-center h-screen bg-[#0d0f12] p-0 sm:p-4 font-sans text-gray-100">
       {showNotification && (
         <NotificationToast
             title="New Challenge Available!"
@@ -162,21 +166,21 @@ const MainApp: React.FC<MainAppProps> = ({ user, onLogout }) => {
             onDismiss={() => setShowNotification(false)}
         />
       )}
-      <div className="w-full h-full bg-white sm:shadow-xl sm:rounded-2xl flex flex-col sm:h-auto sm:min-h-[700px] sm:max-h-[90vh] sm:max-w-md md:max-w-2xl lg:flex-row lg:max-w-7xl">
+      <div className="w-full h-full bg-[#0d0f12] sm:shadow-2xl sm:shadow-black sm:rounded-2xl flex flex-col sm:h-auto sm:min-h-[700px] sm:max-h-[90vh] sm:max-w-md md:max-w-2xl lg:flex-row lg:max-w-7xl border border-gray-800 overflow-hidden">
         <DesktopSidebar user={user} currentView={currentView} setCurrentView={setCurrentView} onLogout={onLogout} />
 
         <div className="flex flex-col flex-1 overflow-hidden">
-            <header className="p-4 pt-8 bg-white border-b border-gray-100 sticky top-0 z-10 flex justify-between items-center lg:hidden">
+            <header className="p-4 pt-8 bg-[#161b22] border-b border-gray-800 sticky top-0 z-10 flex justify-between items-center lg:hidden">
               <div className="flex items-center">
-                <UserIcon className="w-6 h-6 text-indigo-600 mr-2" />
-                <h1 className="text-xl font-bold text-gray-800">{user.displayName}'s Wallet</h1>
+                <UserIcon className="w-6 h-6 text-[#2e8dee] mr-2" />
+                <h1 className="text-xl font-bold text-white">{user.displayName}'s Wallet</h1>
               </div>
-              <button onClick={onLogout} title="Logout" className="text-gray-500 hover:text-indigo-600 transition">
+              <button onClick={onLogout} title="Logout" className="text-gray-400 hover:text-red-400 transition">
                 <LogOut className="w-5 h-5" />
               </button>
             </header>
 
-            <main className={`flex-grow overflow-y-auto bg-gray-50/50 ${mainContentPadding}`}>
+            <main className={`flex-grow overflow-y-auto bg-[#0d0f12] ${mainContentPadding}`}>
               {renderContent()}
             </main>
             

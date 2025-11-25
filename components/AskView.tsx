@@ -1,9 +1,14 @@
-
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob as GenAIBlob, Chat } from '@google/genai';
-import { Mic, MicOff, Bot, User, Loader2, Send, Sparkles, AlertTriangle } from 'lucide-react';
+import { Mic, MicOff, Bot, User, Loader2, Send, Sparkles, AlertTriangle, Trash2 } from 'lucide-react';
+import type { User as UserType, WalletSummary } from '../types';
 
-// --- AUDIO HELPER FUNCTIONS (as per @google/genai guidelines) ---
+interface AskViewProps {
+  user?: UserType;
+  summary?: WalletSummary | null;
+}
+
+// --- AUDIO HELPER FUNCTIONS ---
 
 function decode(base64: string) {
   const binaryString = atob(base64);
@@ -55,7 +60,7 @@ function createBlob(data: Float32Array): GenAIBlob {
   };
 }
 
-// Enhanced Markdown Renderer to correctly handle lists with inline formatting.
+// Enhanced Markdown Renderer
 const MarkdownRenderer: React.FC<{ text: string }> = ({ text }) => {
     const elements: React.ReactNode[] = [];
     let listItems: React.ReactNode[] = [];
@@ -64,10 +69,10 @@ const MarkdownRenderer: React.FC<{ text: string }> = ({ text }) => {
         const parts = content.split(/(\*\*.*?\*\*|`.*?`)/g).filter(Boolean);
         return parts.map((part, i) => {
             if (part.startsWith('**') && part.endsWith('**')) {
-                return <strong key={i}>{part.slice(2, -2)}</strong>;
+                return <strong key={i} className="text-[#39b5ff]">{part.slice(2, -2)}</strong>;
             }
             if (part.startsWith('`') && part.endsWith('`')) {
-                return <code key={i} className="bg-gray-700 rounded px-1 py-0.5 text-sm font-mono">{part.slice(1, -1)}</code>;
+                return <code key={i} className="bg-gray-800 rounded px-1 py-0.5 text-sm font-mono text-yellow-400">{part.slice(1, -1)}</code>;
             }
             return part;
         });
@@ -75,7 +80,7 @@ const MarkdownRenderer: React.FC<{ text: string }> = ({ text }) => {
 
     const flushList = () => {
         if (listItems.length > 0) {
-            elements.push(<ul key={`ul-${elements.length}`} className="list-disc list-inside space-y-1">{listItems}</ul>);
+            elements.push(<ul key={`ul-${elements.length}`} className="list-disc list-inside space-y-1 ml-2 text-gray-300">{listItems}</ul>);
             listItems = [];
         }
     };
@@ -108,22 +113,22 @@ const Headlines: React.FC<{
   prompts: { text: string; emoji: string }[];
   onClick: (prompt: string) => void;
 }> = ({ prompts, onClick }) => {
-  const allPrompts = [...prompts, ...prompts]; // Duplicate for seamless loop
+  const allPrompts = [...prompts, ...prompts];
 
   return (
-    <div className="w-full max-w-md bg-gray-800/80 backdrop-blur-sm rounded-full overflow-hidden relative h-12 flex items-center group">
-      <div className="absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent z-10"></div>
-      <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-gray-900 via-gray-900/80 to-transparent z-10"></div>
+    <div className="w-full max-w-md bg-[#161b22] border border-gray-800 rounded-full overflow-hidden relative h-12 flex items-center group shadow-lg shadow-[#000]/50">
+      <div className="absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-[#161b22] to-transparent z-10"></div>
+      <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-[#161b22] to-transparent z-10"></div>
       <div className="flex animate-scroll group-hover:pause">
         {allPrompts.map((prompt, index) => (
           <button
             key={index}
             onClick={() => onClick(prompt.text)}
-            className="flex-shrink-0 flex items-center mx-4 text-sm text-gray-300 hover:text-white transition whitespace-nowrap"
+            className="flex-shrink-0 flex items-center mx-4 text-sm text-gray-400 hover:text-[#39b5ff] transition whitespace-nowrap font-medium"
           >
             <span className="mr-2 text-lg">{prompt.emoji}</span>
             {prompt.text}
-            <Sparkles className="w-4 h-4 text-indigo-400 ml-6 opacity-50" />
+            <Sparkles className="w-4 h-4 text-[#2e8dee] ml-6 opacity-50" />
           </button>
         ))}
       </div>
@@ -137,18 +142,18 @@ const SuggestionsTicker: React.FC<{
 }> = ({ prompts, onClick }) => {
   if (prompts.length === 0) return null;
   
-  const allPrompts = [...prompts, ...prompts]; // Duplicate for seamless loop
+  const allPrompts = [...prompts, ...prompts];
 
   return (
-    <div className="w-full bg-gray-800/50 rounded-full overflow-hidden relative h-10 flex items-center group mb-2">
-      <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-gray-900/80 to-transparent z-10"></div>
-      <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-gray-900/80 to-transparent z-10"></div>
+    <div className="w-full bg-[#161b22] border-t border-gray-800 relative h-10 flex items-center group mb-2">
+      <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[#161b22] to-transparent z-10"></div>
+      <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[#161b22] to-transparent z-10"></div>
       <div className="flex animate-scroll group-hover:pause">
         {allPrompts.map((prompt, index) => (
           <button
             key={index}
             onClick={() => onClick(prompt.text)}
-            className="flex-shrink-0 flex items-center mx-3 text-xs text-gray-300 hover:text-white transition whitespace-nowrap"
+            className="flex-shrink-0 flex items-center mx-3 text-xs text-gray-400 hover:text-white transition whitespace-nowrap"
           >
             <span className="mr-2 text-base">{prompt.emoji}</span>
             {prompt.text}
@@ -160,7 +165,7 @@ const SuggestionsTicker: React.FC<{
 };
 
 
-const AskView: React.FC = () => {
+const AskView: React.FC<AskViewProps> = ({ user, summary }) => {
     type ConnectionState = 'idle' | 'connecting' | 'connected' | 'error';
     interface TranscriptItem {
       speaker: 'user' | 'model';
@@ -169,7 +174,7 @@ const AskView: React.FC = () => {
       onRetry?: () => void;
     }
 
-    const CHAT_HISTORY_STORAGE_KEY = 'fitcoin_ask_chat_history';
+    const CHAT_HISTORY_STORAGE_KEY = `fitcoin_ask_chat_history_${user?.userId || 'guest'}`;
 
     const [connectionState, setConnectionState] = useState<ConnectionState>('idle');
     const [transcript, setTranscript] = useState<TranscriptItem[]>(() => {
@@ -182,7 +187,7 @@ const AskView: React.FC = () => {
                 }
             }
         } catch (e) {
-            console.error("Failed to load chat history from localStorage", e);
+            console.error("Failed to load chat history", e);
             localStorage.removeItem(CHAT_HISTORY_STORAGE_KEY);
         }
         return [];
@@ -214,23 +219,29 @@ const AskView: React.FC = () => {
         }
     }, [isModelResponding, currentOutput]);
 
+    // Save history limited to last 20 messages
     useEffect(() => {
-        // Only save the history when the conversation is settled (not in a voice call, not waiting for a text response).
         if (connectionState === 'idle' && !isModelResponding) {
             try {
-                // Filter out any empty messages that might be used as placeholders during streaming.
-                const historyToSave = transcript.filter(item => item.text && item.text.trim() !== '' && !item.isError);
+                const historyToSave = transcript.filter(item => item.text && item.text.trim() !== '' && !item.isError).slice(-20);
                 if (historyToSave.length > 0) {
                     localStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(historyToSave));
                 } else {
-                    localStorage.removeItem(CHAT_HISTORY_STORAGE_KEY); // If transcript is empty, clear storage.
+                    localStorage.removeItem(CHAT_HISTORY_STORAGE_KEY);
                 }
             } catch (e) {
-                console.error("Failed to save chat history to localStorage", e);
+                console.error("Failed to save chat history", e);
             }
         }
-    }, [transcript, connectionState, isModelResponding]);
+    }, [transcript, connectionState, isModelResponding, CHAT_HISTORY_STORAGE_KEY]);
 
+    const handleClearHistory = () => {
+        if (window.confirm("Are you sure you want to clear your chat history?")) {
+            setTranscript([]);
+            localStorage.removeItem(CHAT_HISTORY_STORAGE_KEY);
+            setContextualSuggestions([]);
+        }
+    };
 
     const stopConversation = useCallback(async () => {
         if (sessionPromiseRef.current) {
@@ -267,7 +278,16 @@ const AskView: React.FC = () => {
         setConnectionState('idle');
     }, []);
     
-    const systemInstruction = `You are a friendly, enthusiastic, and helpful Fitcoin assistant and health coach. You have complete knowledge of the Fitcoin app ecosystem. Your primary goal is to help users understand the app, stay motivated, and achieve their fitness goals.
+    // Construct System Instruction with User Context
+    const systemInstruction = useMemo(() => {
+        let userContext = "";
+        if (user && summary) {
+            userContext = `\n\nCURRENT USER DATA:\n- Name: ${user.displayName}\n- Fitcoin Balance: ${summary.balance.toFixed(2)}\n- Staked Amount: ${summary.stakedAmount.toFixed(2)}\n- Today's Activities: ${summary.today.activities.length > 0 ? summary.today.activities.map(a => a.title).join(', ') : 'None yet'}\n- Recent Earnings (7 days): ${summary.last7Days.reduce((acc, curr) => acc + curr.fitcoinEarned, 0)} FIT`;
+        }
+
+        return `You are a friendly, enthusiastic, and helpful Fitcoin assistant and health coach. You have complete knowledge of the Fitcoin app ecosystem. Your primary goal is to help users understand the app, stay motivated, and achieve their fitness goals.
+
+${userContext}
 
 Your knowledge includes:
 - Wallet: Balance, today's earnings, weekly totals, activity sync cooldown (1 hour). The balance can be toggled to show its value in Polygon (MATIC).
@@ -278,6 +298,7 @@ Your knowledge includes:
 - Fitcoin Earning: How Fitcoins are calculated from activities like running, walking, cycling, etc. The daily cap is 50 FIT.
 
 When interacting with users:
+- Use the provided user data to personalize your responses. For example, if they have run today, congratulate them on that specific activity. If their balance is low, suggest ways to earn more.
 - Always be encouraging and positive.
 - If the user asks about their Fitcoin balance, you MUST proactively mention its estimated value based on the MATIC conversion and suggest staking as a way to earn more.
 - Keep your answers concise and conversational. Use Markdown for lists or emphasis.
@@ -288,6 +309,7 @@ When interacting with users:
 ? 🛒 What can I buy in the Marketplace?
 [/SUGGESTIONS]
 - The suggestions should be diverse and genuinely helpful for continuing the conversation. Do not add suggestions if the user says goodbye.`;
+    }, [user, summary]);
 
     const startConversation = useCallback(async () => {
         setConnectionState('connecting');
@@ -386,7 +408,7 @@ When interacting with users:
             setConnectionState('error');
             await stopConversation();
         }
-    }, [stopConversation, currentInput, currentOutput]);
+    }, [stopConversation, currentInput, currentOutput, systemInstruction]);
 
     const handleSendTextMessage = async (messageOverride?: string) => {
         const userMessage = messageOverride || textInput.trim();
@@ -508,7 +530,7 @@ When interacting with users:
                  return { Icon: Mic, className: "bg-gray-500", placeholder: "Error. Tap mic to retry." };
             case 'idle':
             default:
-                return { Icon: Mic, className: "bg-indigo-600", placeholder: "Type or tap the mic..." };
+                return { Icon: Mic, className: "bg-[#2e8dee] hover:bg-[#39b5ff] hover:shadow-[0_0_15px_rgba(57,181,255,0.5)]", placeholder: "Type or tap the mic..." };
         }
     };
     
@@ -517,13 +539,13 @@ When interacting with users:
     const displayInput = isVoiceActive ? (currentInput ? currentInput + '...' : '') : textInput;
 
     return (
-        <div className="flex flex-col h-full bg-gray-900 shadow-md overflow-hidden">
+        <div className="flex flex-col h-full bg-[#0d0f12] shadow-2xl overflow-hidden rounded-xl border border-gray-800">
             <style>{`
                 .chat-area-background {
-                    background-color: #111;
-                    background-image: linear-gradient(135deg, rgba(128, 0, 128, 0.1), rgba(255, 105, 180, 0.05)), url('https://blog.1a23.com/wp-content/uploads/sites/2/2020/02/Desktop.png');
-                    background-blend-mode: screen;
-                    background-size: cover, cover;
+                    background-color: #0d0f12;
+                    background-image: 
+                        radial-gradient(at 0% 0%, rgba(46, 141, 238, 0.05) 0px, transparent 50%),
+                        radial-gradient(at 100% 100%, rgba(57, 181, 255, 0.05) 0px, transparent 50%);
                 }
                 @keyframes scroll {
                     from { transform: translateX(0); }
@@ -543,32 +565,41 @@ When interacting with users:
                     animation: bounce 1s infinite ease-in-out;
                 }
             `}</style>
-            <header className="p-4 border-b border-white/10 flex-shrink-0 bg-gray-900/50 backdrop-blur-sm">
-                <h3 className="text-xl font-bold text-white flex items-center">
-                    <Bot className="w-6 h-6 mr-2 text-indigo-400" />
+            <header className="p-4 border-b border-gray-800 flex-shrink-0 bg-[#161b22] backdrop-blur-sm flex justify-between items-center">
+                <h3 className="text-xl font-bold text-white flex items-center tracking-tight">
+                    <Bot className="w-6 h-6 mr-2 text-[#2e8dee]" />
                     Ask Fitcoin AI
                 </h3>
+                <button 
+                    onClick={handleClearHistory} 
+                    className="p-2 text-gray-500 hover:text-red-400 transition-colors rounded-full hover:bg-gray-800"
+                    title="Clear Chat History"
+                >
+                    <Trash2 size={18} />
+                </button>
             </header>
             
             <main className="flex-1 p-4 overflow-y-auto space-y-4 chat-area-background">
                 {transcript.length === 0 && connectionState === 'idle' && !isModelResponding && (
                     <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 p-4">
-                        <Bot size={48} className="mb-4 text-indigo-400" />
-                        <p className="font-semibold text-lg text-gray-300 mb-2">Ask me anything about Fitcoin!</p>
-                        <p className="text-sm mb-6">Or try one of these suggestions:</p>
+                        <div className="w-20 h-20 bg-[#161b22] rounded-full flex items-center justify-center mb-6 shadow-lg shadow-[#000]/50 border border-gray-800">
+                            <Bot size={48} className="text-[#2e8dee]" />
+                        </div>
+                        <p className="font-bold text-xl text-white mb-2">Hello, {user?.displayName || 'there'}!</p>
+                        <p className="font-medium text-gray-400 mb-8 max-w-xs">I'm your personal Fitcoin coach. Ask me about your stats, challenges, or fitness tips.</p>
                         <Headlines prompts={suggestedPrompts} onClick={handleSendTextMessage} />
                     </div>
                 )}
                 {transcript.map((entry, index) => (
                     <div key={index} className={`flex items-start gap-3 ${entry.speaker === 'user' ? 'justify-end' : ''}`}>
-                        {entry.speaker === 'model' && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center"><Bot className="w-5 h-5 text-indigo-400" /></div>}
-                        <div className={`max-w-xs md:max-w-md p-3 rounded-xl shadow-sm ${entry.speaker === 'user' ? 'bg-indigo-500 text-white' : 'bg-gray-800 text-gray-200'}`}>
-                            <div className="text-sm">
+                        {entry.speaker === 'model' && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#161b22] border border-gray-700 flex items-center justify-center"><Bot className="w-5 h-5 text-[#2e8dee]" /></div>}
+                        <div className={`max-w-[85%] md:max-w-md p-3.5 rounded-2xl shadow-md ${entry.speaker === 'user' ? 'bg-[#2e8dee] text-white rounded-br-none' : 'bg-[#161b22] text-gray-200 border border-gray-800 rounded-bl-none'}`}>
+                            <div className="text-sm leading-relaxed">
                                 {isModelResponding && index === transcript.length - 1 && entry.text === '' && !entry.isError ? (
                                     <div className="flex items-center space-x-1 p-2">
-                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
-                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}} />
+                                        <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" />
+                                        <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
+                                        <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{animationDelay: '0.4s'}} />
                                     </div>
                                 ) : (
                                     <>
@@ -578,7 +609,7 @@ When interacting with users:
                                 )}
                                 {entry.isError && (
                                     <div className="mt-2 pt-2 border-t border-white/10">
-                                        <button onClick={entry.onRetry} className="text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white py-1 px-3 rounded-full flex items-center">
+                                        <button onClick={entry.onRetry} className="text-xs font-semibold bg-[#2e8dee] hover:bg-[#39b5ff] text-white py-1 px-3 rounded-full flex items-center transition-all">
                                             <AlertTriangle className="w-3 h-3 mr-1.5" />
                                             Retry
                                         </button>
@@ -586,21 +617,21 @@ When interacting with users:
                                 )}
                             </div>
                         </div>
-                        {entry.speaker === 'user' && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center"><User className="w-5 h-5 text-gray-300" /></div>}
+                        {entry.speaker === 'user' && <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#161b22] border border-gray-700 flex items-center justify-center"><User className="w-5 h-5 text-[#39b5ff]" /></div>}
                     </div>
                 ))}
                  {currentInput && connectionState === 'connected' && (
                     <div className="flex items-start gap-3 justify-end">
-                        <div className="max-w-xs md:max-w-md p-3 rounded-xl bg-indigo-500 text-white opacity-60">
+                        <div className="max-w-[85%] md:max-w-md p-3 rounded-2xl bg-[#2e8dee] text-white opacity-60 rounded-br-none">
                              <p className="text-sm">{currentInput}...</p>
                         </div>
-                         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center"><User className="w-5 h-5 text-gray-300" /></div>
+                         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#161b22] border border-gray-700 flex items-center justify-center"><User className="w-5 h-5 text-[#39b5ff]" /></div>
                     </div>
                  )}
                  {currentOutput && (
                     <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center"><Bot className="w-5 h-5 text-indigo-400" /></div>
-                        <div className="max-w-xs md:max-w-md p-3 rounded-xl bg-gray-800 text-gray-200 opacity-60">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#161b22] border border-gray-700 flex items-center justify-center"><Bot className="w-5 h-5 text-[#2e8dee]" /></div>
+                        <div className="max-w-[85%] md:max-w-md p-3 rounded-2xl bg-[#161b22] text-gray-200 opacity-60 rounded-bl-none">
                              <p className="text-sm">{currentOutput}...</p>
                         </div>
                     </div>
@@ -608,7 +639,7 @@ When interacting with users:
                 <div ref={transcriptEndRef} />
             </main>
             
-            <footer className="p-2 border-t border-white/10 bg-gray-900/50 backdrop-blur-sm flex-shrink-0">
+            <footer className="p-3 border-t border-gray-800 bg-[#161b22] flex-shrink-0">
                 {contextualSuggestions.length > 0 && !isModelResponding && (
                     <SuggestionsTicker 
                         prompts={contextualSuggestions} 
@@ -618,7 +649,7 @@ When interacting with users:
                         }}
                     />
                 )}
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 bg-[#0d0f12] rounded-full border border-gray-800 p-1 pl-4 focus-within:border-[#2e8dee] focus-within:ring-1 focus-within:ring-[#2e8dee] transition-all">
                     <input
                         type="text"
                         value={displayInput}
@@ -630,16 +661,16 @@ When interacting with users:
                         }}
                         onKeyDown={(e) => { if (e.key === 'Enter') handleSendTextMessage(); }}
                         disabled={isVoiceActive}
-                        className="flex-1 w-full bg-gray-800 border-transparent rounded-full py-2 px-4 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-700"
-                        placeholder={isVoiceActive ? placeholder : "Type a message..."}
+                        className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none disabled:text-gray-500"
+                        placeholder={isVoiceActive ? placeholder : "Type your message..."}
                     />
                     <button
                         onClick={textInput && !isVoiceActive ? () => handleSendTextMessage() : handleToggleConversation}
                         disabled={connectionState === 'connecting' || isModelResponding}
-                        className={`w-10 h-10 rounded-full text-white flex-shrink-0 flex items-center justify-center shadow-md transition-all duration-200 disabled:opacity-50 ${textInput && !isVoiceActive ? 'bg-indigo-600' : className}`}
+                        className={`w-10 h-10 rounded-full text-white flex-shrink-0 flex items-center justify-center shadow-lg transition-all duration-200 disabled:opacity-50 ${textInput && !isVoiceActive ? 'bg-[#2e8dee] hover:bg-[#39b5ff]' : className}`}
                         aria-label={textInput && !isVoiceActive ? 'Send message' : (connectionState === 'connected' ? 'Stop conversation' : 'Start conversation')}
                     >
-                        {textInput && !isVoiceActive ? <Send size={20} /> : <Icon size={20} />}
+                        {textInput && !isVoiceActive ? <Send size={18} /> : <Icon size={20} />}
                     </button>
                 </div>
             </footer>
